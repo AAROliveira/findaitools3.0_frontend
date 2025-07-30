@@ -47,11 +47,10 @@ export async function getFilteredPosts(filters: {
     tags?: string[];
     searchTerm?: string;
     dateQuery?: any;
-    orderBy?: { field: string; order: string }; // <-- ADDED: For sorting
+    orderBy?: { field: string; order: string };
 }) {
     const { category, tags, searchTerm, dateQuery, orderBy } = filters;
 
-    // --- Build WHERE clause ---
     const whereClauses: string[] = [];
     if (category && category !== 'all') {
         whereClauses.push(`categoryName: "${category}"`);
@@ -66,23 +65,15 @@ export async function getFilteredPosts(filters: {
     if (dateQuery) {
         whereClauses.push(`dateQuery: ${formatObjectForQuery(dateQuery)}`);
     }
-
-    // --- Build ORDER BY clause ---
-    const orderByArg = orderBy ? `orderby: { field: ${orderBy.field}, order: ${orderBy.order} }` : '';
-
-    // --- Combine arguments ---
-    const args: string[] = [];
-    if (whereClauses.length > 0) {
-        args.push(`where: { ${whereClauses.join(', ')} }`);
+    if (orderBy) {
+        whereClauses.push(`orderby: { field: ${orderBy.field}, order: ${orderBy.order} }`);
     }
-    if (orderByArg) {
-        args.push(orderByArg);
-    }
-    const finalArgs = args.join(', ');
+
+    const whereArg = whereClauses.length > 0 ? `where: { ${whereClauses.join(', ')} }` : '';
 
     const query = `
         query GetFilteredPosts {
-          posts(first: 21, ${finalArgs}) {
+          posts(first: 21, ${whereArg}) {
             nodes {
               id
               title
@@ -130,22 +121,4 @@ export async function getAllCategories() {
     `;
     const data = await fetchAPI(query);
     return data?.categories?.nodes.filter((cat: { name: string }) => cat.name !== 'Uncategorized') || [];
-}
-
-/**
- * Busca todas as tags de posts do WordPress.
- */
-export async function getAllTags() {
-    const query = `
-        query GetAllTags {
-          tags(first: 200, where: { hideEmpty: true }) {
-            nodes {
-              id
-              name
-            }
-          }
-        }
-    `;
-    const data = await fetchAPI(query);
-    return data?.tags?.nodes || [];
 }

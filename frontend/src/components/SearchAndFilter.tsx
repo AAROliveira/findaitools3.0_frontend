@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef, useMemo } from "react";
-import { getFilteredPosts, getAllTags } from "@/lib/api";
+import { getFilteredPosts } from "@/lib/api";
 
 // --- Ícones SVG ---
 const SearchIcon = (props) => (<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>);
@@ -45,7 +45,6 @@ export default function SearchAndFilter({ initialPosts, allCategories, error: in
     const [selectedCategory, setSelectedCategory] = useState<string>("all");
     const [selectedTags, setSelectedTags] = useState<string[]>([]);
     const [sortBy, setSortBy] = useState("DATE_DESC");
-    const [availableTags, setAvailableTags] = useState<{ id: string, name: string }[]>([]);
 
     const isInitialMount = useRef(true);
 
@@ -54,18 +53,6 @@ export default function SearchAndFilter({ initialPosts, allCategories, error: in
         const mapped = mapApiDataToPosts(initialPosts);
         setPosts(mapped);
     }, [initialPosts]);
-
-    useEffect(() => {
-        const fetchAllTags = async () => {
-            try {
-                const tagsData = await getAllTags();
-                setAvailableTags(tagsData);
-            } catch (err) {
-                console.error("Failed to fetch tags:", err);
-            }
-        };
-        fetchAllTags();
-    }, []);
 
     useEffect(() => {
         if (isInitialMount.current) {
@@ -115,6 +102,13 @@ export default function SearchAndFilter({ initialPosts, allCategories, error: in
         }));
     };
 
+    // --- Lógica de Tags Dinâmicas ---
+    const availableTags = useMemo(() => {
+        if (posts.length === 0) return [];
+        const allTagsFromPosts = posts.flatMap(post => post.tags);
+        return Array.from(new Set(allTagsFromPosts)).sort();
+    }, [posts]);
+
     // --- Handlers de Filtro ---
     const toggleTag = (tagName: string) => {
         setSelectedTags(prevTags =>
@@ -139,10 +133,8 @@ export default function SearchAndFilter({ initialPosts, allCategories, error: in
     // --- Renderização ---
     return (
         <div className="w-full max-w-7xl mx-auto space-y-8 p-4">
-            {/* NOVO: Cartão de Filtros Modernizado */}
             <div className="bg-white border border-gray-200 rounded-xl shadow-sm p-6 space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
-                    {/* Coluna 1: Busca e Categoria */}
                     <div className="space-y-4">
                          <div className="relative">
                             <SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
@@ -165,7 +157,6 @@ export default function SearchAndFilter({ initialPosts, allCategories, error: in
                         </select>
                     </div>
 
-                    {/* Coluna 2: Ordenação e Tags */}
                     <div className="space-y-4">
                         <select
                             value={sortBy}
@@ -177,25 +168,24 @@ export default function SearchAndFilter({ initialPosts, allCategories, error: in
                             <option value="TITLE_ASC">Título (A-Z)</option>
                             <option value="TITLE_DESC">Título (Z-A)</option>
                         </select>
-                         {/* Filtro de Tags */}
                         {availableTags.length > 0 && (
                             <div className="p-3 border border-gray-200 rounded-lg">
                                 <div className="flex items-center gap-2 text-sm font-medium text-gray-600 mb-2">
                                     <TagIcon className="w-4 h-4" />
-                                    <span>Filtrar por Tags</span>
+                                    <span>Refinar por Tags</span>
                                 </div>
                                 <div className="flex flex-wrap gap-2">
                                     {availableTags.map(tag => (
                                         <button
-                                            key={tag.id}
-                                            onClick={() => toggleTag(tag.name)}
+                                            key={tag}
+                                            onClick={() => toggleTag(tag)}
                                             className={`px-3 py-1 text-sm rounded-full border transition-all duration-200 ${
-                                                selectedTags.includes(tag.name)
+                                                selectedTags.includes(tag)
                                                     ? 'bg-blue-600 text-white border-blue-600'
                                                     : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-100'
                                             }`}
                                         >
-                                            {tag.name}
+                                            {tag}
                                         </button>
                                     ))}
                                 </div>
@@ -204,7 +194,6 @@ export default function SearchAndFilter({ initialPosts, allCategories, error: in
                     </div>
                 </div>
 
-                {/* Footer do Filtro */}
                 {activeFilterCount > 0 && (
                      <div className="flex items-center justify-between pt-4 border-t border-gray-200">
                         <span className="text-sm text-gray-600">
