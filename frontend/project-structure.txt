@@ -1,0 +1,37 @@
+Estrutura do projeto (frontend):
+
+frontend/
+├── .env.local
+├── next.config.js
+├── package.json
+├── postcss.config.js
+├── tailwind.config.js
+├── tsconfig.json
+├── src/
+│   ├── app/
+│   │   ├── page.tsx                # Página principal (SSR/ISR)
+│   │   ├── HomeClient.tsx          # Componente client-side (UI, tabs, sidebar)
+│   │   └── api/
+│   │       └── posts/              # (opcional, se usar API local)
+│   ├── components/
+│   │   ├── Chatbot.tsx
+│   │   ├── SearchAndFilter.tsx     # Componente de busca/filtros/cards
+│   │   └── ui/
+│   │       ├── badge.tsx
+│   │       ├── button.tsx
+│   │       ├── card.tsx
+│   │       └── input.tsx
+│   └── lib/
+│       └── mockPosts.json          # Mock de dados (apenas para dev)
+
+Principais fluxos:
+- SSR/ISR: page.tsx busca dados do WordPress via GraphQL e repassa para HomeClient.
+- HomeClient: controla abas, sidebar, UI interativa.
+- SearchAndFilter: recebe posts já mapeados, faz busca/filtros no client.
+- .env.local: define o endpoint do GraphQL do WordPress.
+
+Dependências principais: Next.js, React, Tailwind CSS, Framer Motion, Lucide React.
+
+Para rodar:
+- Configure .env.local corretamente.
+- Rode `npm install` e depois `npm run dev` ou `npm run build && npm start`.
