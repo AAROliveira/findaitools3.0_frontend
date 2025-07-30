@@ -169,7 +169,7 @@ export default function SearchAndFilter({ initialPosts, allCategories, error: in
                             <option value="TITLE_DESC">Título (Z-A)</option>
                         </select>
                         {availableTags.length > 0 && (
-                            <div className="p-3 border border-gray-200 rounded-lg">
+                            <div className="p-2 border border-gray-200 rounded-lg">
                                 <div className="flex items-center gap-2 text-sm font-medium text-gray-600 mb-2">
                                     <TagIcon className="w-4 h-4" />
                                     <span>Refinar por Tags</span>
@@ -179,7 +179,7 @@ export default function SearchAndFilter({ initialPosts, allCategories, error: in
                                         <button
                                             key={tag}
                                             onClick={() => toggleTag(tag)}
-                                            className={`px-3 py-1 text-sm rounded-full border transition-all duration-200 ${
+                                            className={`px-2 py-0.5 text-xs rounded-full border transition-all duration-200 ${
                                                 selectedTags.includes(tag)
                                                     ? 'bg-blue-600 text-white border-blue-600'
                                                     : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-100'
@@ -194,17 +194,35 @@ export default function SearchAndFilter({ initialPosts, allCategories, error: in
                     </div>
                 </div>
 
-                {activeFilterCount > 0 && (
-                     <div className="flex items-center justify-between pt-4 border-t border-gray-200">
-                        <span className="text-sm text-gray-600">
-                            <span className="font-bold text-blue-600">{activeFilterCount}</span> filtro(s) ativo(s)
-                        </span>
-                        <button onClick={clearFilters} className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-red-600 transition-colors">
-                            <ClearIcon className="w-4 h-4" />
-                            Limpar Filtros
-                        </button>
+                {/* Footer do Filtro com contagem de soluções */}
+                <div className="flex items-center justify-between pt-4 border-t border-gray-200">
+                    {/* Lado Esquerdo: Contagem de Soluções */}
+                    <div className="text-sm text-gray-600">
+                        {!loading && (
+                            <>
+                                <span className="font-bold text-gray-800">{posts.length}</span>
+                                <span> {posts.length === 1 ? 'solução encontrada' : 'soluções encontradas'}</span>
+                            </>
+                        )}
+                        {loading && (
+                            <span className="italic">Buscando...</span>
+                        )}
                     </div>
-                )}
+
+                    {/* Lado Direito: Filtros Ativos e Botão Limpar */}
+                    {activeFilterCount > 0 && (
+                        <div className="flex items-center gap-3">
+                            <span className="text-sm text-gray-600">
+                                <span className="font-bold text-blue-600">{activeFilterCount}</span>
+                                <span> filtro(s) ativo(s)</span>
+                            </span>
+                            <button onClick={clearFilters} className="flex items-center gap-1.5 text-sm font-semibold text-gray-500 hover:text-red-600 transition-colors">
+                                <ClearIcon className="w-4 h-4" />
+                                Limpar
+                            </button>
+                        </div>
+                    )}
+                </div>
             </div>
 
             {/* Grelha de Resultados */}
