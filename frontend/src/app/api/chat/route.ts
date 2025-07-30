@@ -36,7 +36,7 @@ async function initializeVertexAI() {
 
     // Configuração do modelo com a instrução do sistema e a ferramenta RAG.
     const model = vertex_ai.getGenerativeModel({
-        model: 'gemini-2.0-flash-lite',
+        model: 'gemini-2.0-flash-lite-001',
         systemInstruction: systemInstruction,
         tools: [{
             retrieval: {
