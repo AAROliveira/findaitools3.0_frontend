@@ -33,60 +33,75 @@ export function Chatbot() {
     }, []);
 
     async function sendMessage() {
-        if (!input.trim() || loading) return;
+    if (!input.trim() || loading) return;
 
-        const nextCounter = messageCounter + 1;
-        setMessageCounter(nextCounter);
+    const nextCounter = messageCounter + 1;
+    setMessageCounter(nextCounter);
 
-        const userMessage: Message = {
-            id: `user-${nextCounter}`,
-            role: "user",
-            content: input,
+    const userMessage: Message = {
+        id: `user-${nextCounter}`,
+        role: "user",
+        content: input,
+        timestamp: new Date(),
+    };
+    
+    // Cria uma nova lista de mensagens para enviar para a API, incluindo a mensagem atual do usuário
+    const updatedMessages = [...messages, userMessage];
+
+    setMessages(updatedMessages);
+    setInput("");
+    setLoading(true);
+
+    try {
+        // CORREÇÃO APLICADA AQUI
+        // 1. Mapeia o histórico para o formato que a API do Gemini espera ('model' em vez de 'assistant').
+        // 2. Envia o histórico e a mensagem atual com as chaves corretas ('history' e 'message').
+        const historyForApi = updatedMessages.map(msg => ({
+            role: msg.role === 'assistant' ? 'model' : 'user',
+            parts: [{ text: msg.content }]
+        }));
+
+        const response = await fetch('/api/chat', {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                // O history aqui é o array de mensagens formatado
+                history: historyForApi.slice(0, -1), // Envia todo o histórico, exceto a última mensagem do usuário
+                // A message é a última entrada do usuário
+                message: input
+            }),
+        });
+
+        if (!response.ok) {
+            // Tenta pegar uma mensagem de erro mais específica do backend
+            const errorData = await response.json();
+            throw new Error(errorData.error || "Erro na comunicação com o servidor");
+        }
+
+        const data = await response.json();
+
+        const assistantMessage: Message = {
+            id: `assistant-${nextCounter}`,
+            role: "assistant",
+            content: data.response || "Desculpe, não consegui processar sua pergunta.",
             timestamp: new Date(),
         };
 
-        setMessages((prev) => [...prev, userMessage]);
-        setInput("");
-        setLoading(true);
+        setMessages((prev) => [...prev, assistantMessage]);
 
-        try {
-
-            // Em produção, tente usar uma URL absoluta se necessário
-            const apiUrl = typeof window === 'undefined'
-                ? process.env.NEXT_PUBLIC_BACKEND_URL || ''
-                : '/api/chat';
-            const response = await fetch(apiUrl, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ question: input }),
-            });
-
-            if (!response.ok) {
-                throw new Error("Erro na comunicação com o servidor");
-            }
-
-            const data = await response.json();
-
-            const assistantMessage: Message = {
-                id: `assistant-${nextCounter}`,
-                role: "assistant",
-                content: data.response || "Desculpe, não consegui processar sua pergunta.",
-                timestamp: new Date(),
-            };
-
-            setMessages((prev) => [...prev, assistantMessage]);
-        } catch (error) {
-            const errorMessage: Message = {
-                id: `error-${nextCounter}`,
-                role: "assistant",
-                content: "😔 Desculpe, ocorreu um erro. Verifique se o servidor está rodando e tente novamente.",
-                timestamp: new Date(),
-            };
-            setMessages((prev) => [...prev, errorMessage]);
-        } finally {
-            setLoading(false);
-        }
+    } catch (error) {
+        const errorMessageContent = error instanceof Error ? error.message : "😔 Desculpe, ocorreu um erro. Tente novamente.";
+        const errorMessage: Message = {
+            id: `error-${nextCounter}`,
+            role: "assistant",
+            content: errorMessageContent,
+            timestamp: new Date(),
+        };
+        setMessages((prev) => [...prev, errorMessage]);
+    } finally {
+        setLoading(false);
     }
+}
 
     const handleKeyPress = (e: React.KeyboardEvent) => {
         if (e.key === "Enter" && !e.shiftKey) {
