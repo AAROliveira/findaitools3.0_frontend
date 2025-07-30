@@ -12,7 +12,7 @@ frontend/
 │   │   ├── page.tsx                # Página principal (SSR/ISR)
 │   │   ├── HomeClient.tsx          # Componente client-side (UI, tabs, sidebar)
 │   │   └── api/
-│   │       └── posts/              # (opcional, se usar API local)
+│   │       └── graphql/            # Proxy GraphQL (route.ts)
 │   ├── components/
 │   │   ├── Chatbot.tsx
 │   │   ├── SearchAndFilter.tsx     # Componente de busca/filtros/cards
@@ -22,13 +22,18 @@ frontend/
 │   │       ├── card.tsx
 │   │       └── input.tsx
 │   └── lib/
+│       ├── api.ts                  # Funções de fetch (usa proxy /api/graphql)
 │       └── mockPosts.json          # Mock de dados (apenas para dev)
 
 Principais fluxos:
-- SSR/ISR: page.tsx busca dados do WordPress via GraphQL e repassa para HomeClient.
+- SSR/ISR: page.tsx busca dados do WordPress via proxy GraphQL (/api/graphql) e repassa para HomeClient.
 - HomeClient: controla abas, sidebar, UI interativa.
 - SearchAndFilter: recebe posts já mapeados, faz busca/filtros no client.
-- .env.local: define o endpoint do GraphQL do WordPress.
+- .env.local: define o endpoint do GraphQL do WordPress (usado apenas pelo proxy).
+
+Proxy GraphQL:
+- src/app/api/graphql/route.ts: repassa requisições do frontend para o endpoint real do WordPress, eliminando CORS.
+- O frontend nunca acessa diretamente o domínio do WordPress, sempre via /api/graphql.
 
 Dependências principais: Next.js, React, Tailwind CSS, Framer Motion, Lucide React.
 
