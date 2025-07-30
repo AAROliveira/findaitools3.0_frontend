@@ -4,16 +4,18 @@
  * @param variables As variáveis para a consulta.
  */
 async function fetchAPI(query: string, { variables }: { variables?: any } = {}) {
-    // Aponta para o ponto de acesso local (proxy) que criámos
-    const apiUrl = '/api/graphql'; 
+    // No SSR/ISR (servidor), use a URL absoluta do WordPress; no client, use o proxy local
+    const isServer = typeof window === 'undefined';
+    const apiUrl = isServer
+        ? process.env.NEXT_PUBLIC_WORDPRESS_API_URL || 'https://findaitools.com.br/graphql'
+        : '/api/graphql';
 
     try {
         const res = await fetch(apiUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ query, variables }),
-            // 'no-cache' garante que os dados são sempre frescos ao filtrar no cliente
-            cache: 'no-cache' 
+            cache: 'no-cache'
         });
 
         const json = await res.json();
@@ -52,7 +54,7 @@ export async function getFilteredPosts(filters: {
 }) {
     const { category, tags, searchTerm, dateQuery } = filters;
 
-    const whereClauses: string[] = []; 
+    const whereClauses: string[] = [];
     if (category && category !== 'all') {
         whereClauses.push(`categoryName: "${category}"`);
     }
