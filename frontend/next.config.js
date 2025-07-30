@@ -1,6 +1,4 @@
 /** @type {import('next').NextConfig} */
-const nextConfig = {
-  // rewrites removidos para compatibilidade com Vercel
-}
+const nextConfig = {}
 
 module.exports = nextConfig
