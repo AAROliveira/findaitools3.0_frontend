@@ -160,66 +160,68 @@ export default function SearchAndFilter({ initialPosts, allCategories, error: in
     return (
         <div className="w-full max-w-7xl mx-auto space-y-8 p-4">
             <div className="bg-white border border-gray-200 rounded-xl shadow-sm p-6 space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
-                    <div className="space-y-4">
-                         <div className="relative">
-                            <SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
-                            <input
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                                placeholder="Buscar por nome ou palavra-chave..."
-                                className="w-full pl-12 pr-4 py-3 text-base rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition"
-                            />
-                        </div>
-                        <select
-                            value={selectedCategory}
-                            onChange={(e) => setSelectedCategory(e.target.value)}
-                            className="w-full h-12 px-4 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 bg-white transition"
-                        >
-                            <option value="all">Todas as Categorias</option>
-                            {allCategories.map(cat => (
-                                <option key={cat.id} value={cat.name}>{cat.name}</option>
-                            ))}
-                        </select>
+                {/* Grade Principal de Filtros */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {/* Item 1: Busca */}
+                    <div className="relative">
+                        <SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+                        <input
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            placeholder="Buscar por nome ou palavra-chave..."
+                            className="w-full pl-12 pr-4 py-3 text-base h-full rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition"
+                        />
                     </div>
-
-                    <div className="space-y-4">
-                        <select
-                            value={sortBy}
-                            onChange={(e) => setSortBy(e.target.value)}
-                            className="w-full h-12 px-4 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 bg-white transition"
-                        >
-                            <option value="DATE_DESC">Mais Recentes</option>
-                            <option value="DATE_ASC">Mais Antigos</option>
-                            <option value="TITLE_ASC">Título (A-Z)</option>
-                            <option value="TITLE_DESC">Título (Z-A)</option>
-                        </select>
-                        {tagContext.length > 0 && (
-                            <div className="p-2 border border-gray-200 rounded-lg">
-                                <div className="flex items-center gap-2 text-sm font-medium text-gray-600 mb-2">
-                                    <TagIcon className="w-4 h-4" />
-                                    <span>Refinar por Tags</span>
-                                </div>
-                                <div className="flex flex-wrap gap-2">
-                                    {tagContext.map(tag => (
-                                        <button
-                                            key={tag}
-                                            onClick={() => toggleTag(tag)}
-                                            className={`px-2 py-0.5 text-xs rounded-full border transition-all duration-200 ${
-                                                selectedTags.includes(tag)
-                                                    ? 'bg-blue-600 text-white border-blue-600'
-                                                    : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-100'
-                                            }`}
-                                        >
-                                            {tag}
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-                    </div>
+                    {/* Item 2: Categoria */}
+                    <select
+                        value={selectedCategory}
+                        onChange={(e) => setSelectedCategory(e.target.value)}
+                        className="w-full h-full px-4 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 bg-white transition"
+                    >
+                        <option value="all">Todas as Categorias</option>
+                        {allCategories.map(cat => (
+                            <option key={cat.id} value={cat.name}>{cat.name}</option>
+                        ))}
+                    </select>
+                    {/* Item 3: Ordenação */}
+                    <select
+                        value={sortBy}
+                        onChange={(e) => setSortBy(e.target.value)}
+                        className="w-full h-full px-4 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 bg-white transition"
+                    >
+                        <option value="DATE_DESC">Mais Recentes</option>
+                        <option value="DATE_ASC">Mais Antigos</option>
+                        <option value="TITLE_ASC">Título (A-Z)</option>
+                        <option value="TITLE_DESC">Título (Z-A)</option>
+                    </select>
                 </div>
 
+                {/* Seção de Tags (agora em uma nova linha) */}
+                {tagContext.length > 0 && (
+                    <div className="p-2 border border-gray-200 rounded-lg">
+                        <div className="flex items-center gap-2 text-sm font-medium text-gray-600 mb-2">
+                            <TagIcon className="w-4 h-4" />
+                            <span>Refinar por Tags</span>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                            {tagContext.map(tag => (
+                                <button
+                                    key={tag}
+                                    onClick={() => toggleTag(tag)}
+                                    className={`px-2 py-0.5 text-xs rounded-full border transition-all duration-200 ${
+                                        selectedTags.includes(tag)
+                                            ? 'bg-blue-600 text-white border-blue-600'
+                                            : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-100'
+                                    }`}
+                                >
+                                    {tag}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                {/* Footer do Filtro */}
                 <div className="flex items-center justify-between pt-4 border-t border-gray-200">
                     <div className="text-sm text-gray-600">
                         {!loading && (
@@ -240,6 +242,7 @@ export default function SearchAndFilter({ initialPosts, allCategories, error: in
                     )}
                 </div>
 
+                {/* Display de Filtros Ativos */}
                 {activeFilterCount > 0 && (
                     <div className="flex flex-wrap items-center gap-2 pt-4 border-t border-gray-200">
                         <span className="text-sm font-semibold text-gray-700">Filtros Ativos:</span>
@@ -332,7 +335,7 @@ export default function SearchAndFilter({ initialPosts, allCategories, error: in
                                     <span>Carregando...</span>
                                 </>
                             ) : (
-                                <span>Carregar Mais Ferramentas</span>
+                                <span>Carregar Mais Soluções</span>
                             )}
                         </button>
                     </div>
