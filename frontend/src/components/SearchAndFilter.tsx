@@ -1,7 +1,7 @@
 // ⚠️ IMPORTANTE: Nunca faça fetch direto para o domínio do WordPress neste componente!
 "use client";
 
-import React, { useState, useEffect, useRef, useMemo } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { getFilteredPosts } from "@/lib/api";
 
 // --- Ícones SVG ---
@@ -25,7 +25,7 @@ export interface Post {
 }
 
 export interface SearchAndFilterProps {
-    initialPosts: any[];
+    initialPosts: any; // Now expects the whole posts object
     allCategories: { id: string; name: string }[];
     error: string | null;
     onPostSelect?: (post: Post) => void;
@@ -36,8 +36,13 @@ export default function SearchAndFilter({ initialPosts, allCategories, error: in
     // --- Estado do Componente ---
     const [posts, setPosts] = useState<Post[]>([]);
     const [loading, setLoading] = useState(false);
+    const [loadingMore, setLoadingMore] = useState(false);
     const [error, setError] = useState<string | null>(initialError);
     const [tagContext, setTagContext] = useState<string[]>([]);
+    
+    // --- Estado de Paginação ---
+    const [hasNextPage, setHasNextPage] = useState(false);
+    const [endCursor, setEndCursor] = useState<string | null>(null);
 
     // --- Estado dos Filtros ---
     const [searchTerm, setSearchTerm] = useState("");
@@ -49,9 +54,11 @@ export default function SearchAndFilter({ initialPosts, allCategories, error: in
 
     // --- Efeitos ---
     useEffect(() => {
-        const mapped = mapApiDataToPosts(initialPosts);
+        const mapped = mapApiDataToPosts(initialPosts?.nodes || []);
         setPosts(mapped);
         setTagContext(extractTags(mapped));
+        setHasNextPage(initialPosts?.pageInfo?.hasNextPage || false);
+        setEndCursor(initialPosts?.pageInfo?.endCursor || null);
     }, [initialPosts]);
 
     useEffect(() => {
@@ -60,43 +67,51 @@ export default function SearchAndFilter({ initialPosts, allCategories, error: in
             return;
         }
         const handler = setTimeout(() => {
-            fetchAndSetPosts();
+            fetchAndSetPosts(false); // False indicates it's a new search, not loading more
         }, 500);
         return () => clearTimeout(handler);
     }, [searchTerm, selectedCategory, sortBy, selectedTags]);
 
     // --- Funções de Fetch e Mapeamento ---
-    const fetchAndSetPosts = async () => {
-        setLoading(true);
+    const fetchAndSetPosts = async (isLoadingMore = false) => {
+        if (isLoadingMore) {
+            setLoadingMore(true);
+        } else {
+            setLoading(true);
+        }
         setError(null);
-        const [field, order] = sortBy.split('_');
         
-        // Query for posts based on all active filters
+        const [field, order] = sortBy.split('_');
         const filters = {
             searchTerm: searchTerm || undefined,
             category: selectedCategory !== 'all' ? selectedCategory : undefined,
             tags: selectedTags.length > 0 ? selectedTags : undefined,
             orderBy: { field, order },
+            after: isLoadingMore && endCursor ? endCursor : undefined,
         };
 
         try {
-            const newPostsData = await getFilteredPosts(filters);
-            const mappedPosts = mapApiDataToPosts(newPostsData);
-            setPosts(mappedPosts);
-
-            // If the primary filters change, update the tag context
-            if (filters.tags === undefined) {
-                 const contextFilters = { ...filters, tags: undefined, first: 100 }; // fetch more to get a good tag context
-                 const contextPostsData = await getFilteredPosts(contextFilters);
-                 const contextMapped = mapApiDataToPosts(contextPostsData);
-                 setTagContext(extractTags(contextMapped));
+            const postsData = await getFilteredPosts(filters);
+            const newPosts = mapApiDataToPosts(postsData?.nodes || []);
+            
+            if (isLoadingMore) {
+                setPosts(prevPosts => [...prevPosts, ...newPosts]);
+            } else {
+                setPosts(newPosts);
+                // Only update tag context on a new search
+                const contextTags = extractTags(newPosts);
+                setTagContext(contextTags);
             }
+
+            setHasNextPage(postsData?.pageInfo?.hasNextPage || false);
+            setEndCursor(postsData?.pageInfo?.endCursor || null);
 
         } catch (err) {
             setError("Falha ao buscar os posts. Tente novamente.");
             console.error(err);
         } finally {
             setLoading(false);
+            setLoadingMore(false);
         }
     };
     
@@ -205,7 +220,6 @@ export default function SearchAndFilter({ initialPosts, allCategories, error: in
                     </div>
                 </div>
 
-                {/* Footer do Filtro com contagem de soluções e filtros ativos */}
                 <div className="flex items-center justify-between pt-4 border-t border-gray-200">
                     <div className="text-sm text-gray-600">
                         {!loading && (
@@ -226,7 +240,6 @@ export default function SearchAndFilter({ initialPosts, allCategories, error: in
                     )}
                 </div>
 
-                {/* Display de Filtros Ativos */}
                 {activeFilterCount > 0 && (
                     <div className="flex flex-wrap items-center gap-2 pt-4 border-t border-gray-200">
                         <span className="text-sm font-semibold text-gray-700">Filtros Ativos:</span>
@@ -251,58 +264,80 @@ export default function SearchAndFilter({ initialPosts, allCategories, error: in
             </div>
 
             {/* Grelha de Resultados */}
-            {loading && (
-                <div className="text-center py-16 flex justify-center items-center gap-3 text-gray-600">
-                    <LoaderIcon className="w-6 h-6" />
-                    <span className="text-lg">Carregando ferramentas...</span>
-                </div>
-            )}
-            {error && (
-                <div className="text-red-500 text-center py-16">{error}</div>
-            )}
-            {!loading && !error && (
-                <div>
-                    {posts.length > 0 ? (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {posts.map((post) => (
-                                <div key={post.id} className="h-full bg-white rounded-xl border border-gray-200 shadow-md hover:shadow-xl transition-shadow duration-300 cursor-pointer group flex flex-col overflow-hidden" onClick={() => onPostSelect?.(post)}>
-                                    <div className="aspect-video w-full overflow-hidden">
-                                        <img 
-                                            src={post.imageUrl || 'https://placehold.co/600x400/EEE/31343C?text=Sem+Imagem'} 
-                                            alt={`Imagem de ${post.title}`}
-                                            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                                        />
+            <div className="space-y-8">
+                {loading && (
+                    <div className="text-center py-16 flex justify-center items-center gap-3 text-gray-600">
+                        <LoaderIcon className="w-6 h-6" />
+                        <span className="text-lg">Carregando ferramentas...</span>
+                    </div>
+                )}
+                {error && (
+                    <div className="text-red-500 text-center py-16">{error}</div>
+                )}
+                {!loading && !error && (
+                    <div>
+                        {posts.length > 0 ? (
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                {posts.map((post) => (
+                                    <div key={post.id} className="h-full bg-white rounded-xl border border-gray-200 shadow-md hover:shadow-xl transition-shadow duration-300 cursor-pointer group flex flex-col overflow-hidden" onClick={() => onPostSelect?.(post)}>
+                                        <div className="aspect-video w-full overflow-hidden">
+                                            <img 
+                                                src={post.imageUrl || 'https://placehold.co/600x400/EEE/31343C?text=Sem+Imagem'} 
+                                                alt={`Imagem de ${post.title}`}
+                                                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                                            />
+                                        </div>
+                                        <div className="p-5 flex-grow flex flex-col">
+                                            <div className="flex items-start justify-between gap-3">
+                                                <h3 className="text-lg font-bold text-gray-800 group-hover:text-blue-600 line-clamp-2 flex-grow">{post.title}</h3>
+                                                <a href={post.url} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="flex-shrink-0">
+                                                    <ExternalLinkIcon className="w-5 h-5 text-gray-400 hover:text-blue-500" />
+                                                </a>
+                                            </div>
+                                            <div className="flex items-center gap-2 text-sm text-gray-500 pt-1">
+                                                <CalendarIcon className="w-4 h-4" />
+                                                <span>{new Date(post.publishDate).toLocaleDateString("pt-BR")}</span>
+                                            </div>
+                                            <p className="text-gray-600 text-sm my-4 h-16 line-clamp-3">{post.excerpt}</p>
+                                            <div className="flex flex-wrap gap-2 mt-auto">
+                                                {post.tags.slice(0, 3).map(tag => <span key={tag} className="px-2 py-1 text-xs bg-gray-100 text-gray-700 rounded-full border border-gray-200">{tag}</span>)}
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div className="p-5 flex-grow flex flex-col">
-                                        <div className="flex items-start justify-between gap-3">
-                                            <h3 className="text-lg font-bold text-gray-800 group-hover:text-blue-600 line-clamp-2 flex-grow">{post.title}</h3>
-                                            <a href={post.url} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="flex-shrink-0">
-                                                <ExternalLinkIcon className="w-5 h-5 text-gray-400 hover:text-blue-500" />
-                                            </a>
-                                        </div>
-                                        <div className="flex items-center gap-2 text-sm text-gray-500 pt-1">
-                                            <CalendarIcon className="w-4 h-4" />
-                                            <span>{new Date(post.publishDate).toLocaleDateString("pt-BR")}</span>
-                                        </div>
-                                        <p className="text-gray-600 text-sm my-4 h-16 line-clamp-3">{post.excerpt}</p>
-                                        <div className="flex flex-wrap gap-2 mt-auto">
-                                            {post.tags.slice(0, 3).map(tag => <span key={tag} className="px-2 py-1 text-xs bg-gray-100 text-gray-700 rounded-full border border-gray-200">{tag}</span>)}
-                                        </div>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    ) : (
-                        <div className="text-center py-16">
-                            <div className="inline-block bg-gray-100 p-5 rounded-full mb-4">
-                                <SearchIcon className="text-gray-400 w-12 h-12" />
+                                ))}
                             </div>
-                            <h3 className="text-2xl font-semibold text-gray-800 mt-4 mb-2">Nenhum resultado encontrado</h3>
-                            <p className="text-gray-500 max-w-md mx-auto">Tente ajustar seus filtros ou usar palavras-chave diferentes para encontrar a ferramenta de IA que você procura.</p>
-                        </div>
-                    )}
-                </div>
-            )}
+                        ) : (
+                            <div className="text-center py-16">
+                                <div className="inline-block bg-gray-100 p-5 rounded-full mb-4">
+                                    <SearchIcon className="text-gray-400 w-12 h-12" />
+                                </div>
+                                <h3 className="text-2xl font-semibold text-gray-800 mt-4 mb-2">Nenhum resultado encontrado</h3>
+                                <p className="text-gray-500 max-w-md mx-auto">Tente ajustar seus filtros ou usar palavras-chave diferentes para encontrar a ferramenta de IA que você procura.</p>
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {/* Botão Carregar Mais */}
+                {!loading && hasNextPage && (
+                    <div className="text-center">
+                        <button
+                            onClick={() => fetchAndSetPosts(true)}
+                            disabled={loadingMore}
+                            className="bg-blue-600 text-white font-semibold px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors duration-300 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center gap-2 mx-auto"
+                        >
+                            {loadingMore ? (
+                                <>
+                                    <LoaderIcon className="w-5 h-5" />
+                                    <span>Carregando...</span>
+                                </>
+                            ) : (
+                                <span>Carregar Mais Ferramentas</span>
+                            )}
+                        </button>
+                    </div>
+                )}
+            </div>
         </div>
     );
 }

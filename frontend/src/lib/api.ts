@@ -40,16 +40,17 @@ const formatObjectForQuery = (obj: any): string => {
 };
 
 /**
- * Busca posts com base nos filtros e ordenação fornecidos.
+ * Busca posts com base nos filtros, ordenação e paginação.
  */
 export async function getFilteredPosts(filters: {
     category?: string;
     tags?: string[];
     searchTerm?: string;
-    dateQuery?: any;
     orderBy?: { field: string; order: string };
+    first?: number;
+    after?: string;
 }) {
-    const { category, tags, searchTerm, dateQuery, orderBy } = filters;
+    const { category, tags, searchTerm, orderBy, first = 21, after } = filters;
 
     const whereClauses: string[] = [];
     if (category && category !== 'all') {
@@ -62,18 +63,16 @@ export async function getFilteredPosts(filters: {
     if (searchTerm) {
         whereClauses.push(`search: "${searchTerm}"`);
     }
-    if (dateQuery) {
-        whereClauses.push(`dateQuery: ${formatObjectForQuery(dateQuery)}`);
-    }
     if (orderBy) {
         whereClauses.push(`orderby: { field: ${orderBy.field}, order: ${orderBy.order} }`);
     }
 
     const whereArg = whereClauses.length > 0 ? `where: { ${whereClauses.join(', ')} }` : '';
+    const afterArg = after ? `after: "${after}"` : '';
 
     const query = `
         query GetFilteredPosts {
-          posts(first: 21, ${whereArg}) {
+          posts(first: ${first}, ${whereArg}, ${afterArg}) {
             nodes {
               id
               title
@@ -97,12 +96,16 @@ export async function getFilteredPosts(filters: {
                 }
               }
             }
+            pageInfo {
+              hasNextPage
+              endCursor
+            }
           }
         }
     `;
 
     const data = await fetchAPI(query);
-    return data?.posts?.nodes || [];
+    return data?.posts; // Return the whole posts object including pageInfo
 }
 
 /**
