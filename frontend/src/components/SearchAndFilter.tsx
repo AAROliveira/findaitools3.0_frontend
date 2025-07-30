@@ -9,10 +9,8 @@ const SearchIcon = (props) => (<svg xmlns="http://www.w3.org/2000/svg" width="24
 const ExternalLinkIcon = (props) => (<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>);
 const CalendarIcon = (props) => (<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>);
 const LoaderIcon = (props) => (<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="animate-spin" {...props}><line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line></svg>);
-const SortIcon = (props) => (<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="m3 16 4 4 4-4"/><path d="M7 20V4"/><path d="m21 8-4-4-4 4"/><path d="M17 4v16"/></svg>);
 const TagIcon = (props) => (<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M12.586 2.586a2 2 0 0 0-2.828 0L2.172 10.172a2 2 0 0 0 0 2.828l7.414 7.414a2 2 0 0 0 2.828 0l7.586-7.586a2 2 0 0 0 0-2.828z"/><circle cx="16" cy="8" r="1"/></svg>);
 const ClearIcon = (props) => (<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>);
-
 
 // --- Interfaces ---
 export interface Post {
@@ -39,6 +37,7 @@ export default function SearchAndFilter({ initialPosts, allCategories, error: in
     const [posts, setPosts] = useState<Post[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(initialError);
+    const [tagContext, setTagContext] = useState<string[]>([]);
 
     // --- Estado dos Filtros ---
     const [searchTerm, setSearchTerm] = useState("");
@@ -52,6 +51,7 @@ export default function SearchAndFilter({ initialPosts, allCategories, error: in
     useEffect(() => {
         const mapped = mapApiDataToPosts(initialPosts);
         setPosts(mapped);
+        setTagContext(extractTags(mapped));
     }, [initialPosts]);
 
     useEffect(() => {
@@ -70,16 +70,28 @@ export default function SearchAndFilter({ initialPosts, allCategories, error: in
         setLoading(true);
         setError(null);
         const [field, order] = sortBy.split('_');
+        
+        // Query for posts based on all active filters
         const filters = {
             searchTerm: searchTerm || undefined,
             category: selectedCategory !== 'all' ? selectedCategory : undefined,
             tags: selectedTags.length > 0 ? selectedTags : undefined,
             orderBy: { field, order },
         };
+
         try {
             const newPostsData = await getFilteredPosts(filters);
-            const mapped = mapApiDataToPosts(newPostsData);
-            setPosts(mapped);
+            const mappedPosts = mapApiDataToPosts(newPostsData);
+            setPosts(mappedPosts);
+
+            // If the primary filters change, update the tag context
+            if (filters.tags === undefined) {
+                 const contextFilters = { ...filters, tags: undefined, first: 100 }; // fetch more to get a good tag context
+                 const contextPostsData = await getFilteredPosts(contextFilters);
+                 const contextMapped = mapApiDataToPosts(contextPostsData);
+                 setTagContext(extractTags(contextMapped));
+            }
+
         } catch (err) {
             setError("Falha ao buscar os posts. Tente novamente.");
             console.error(err);
@@ -88,6 +100,12 @@ export default function SearchAndFilter({ initialPosts, allCategories, error: in
         }
     };
     
+    const extractTags = (data: Post[]): string[] => {
+        if (!data || data.length === 0) return [];
+        const allTags = data.flatMap(post => post.tags);
+        return Array.from(new Set(allTags)).sort();
+    };
+
     const mapApiDataToPosts = (data: any[]): Post[] => {
         if (!data || !Array.isArray(data)) return [];
         return data.map((post: any) => ({
@@ -101,13 +119,6 @@ export default function SearchAndFilter({ initialPosts, allCategories, error: in
             publishDate: new Date(post.date).toISOString(),
         }));
     };
-
-    // --- Lógica de Tags Dinâmicas ---
-    const availableTags = useMemo(() => {
-        if (posts.length === 0) return [];
-        const allTagsFromPosts = posts.flatMap(post => post.tags);
-        return Array.from(new Set(allTagsFromPosts)).sort();
-    }, [posts]);
 
     // --- Handlers de Filtro ---
     const toggleTag = (tagName: string) => {
@@ -133,7 +144,7 @@ export default function SearchAndFilter({ initialPosts, allCategories, error: in
     // --- Renderização ---
     return (
         <div className="w-full max-w-7xl mx-auto space-y-8 p-4">
-            <div className="bg-white border border-gray-200 rounded-xl shadow-sm p-6 space-y-6">
+            <div className="bg-white border border-gray-200 rounded-xl shadow-sm p-6 space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
                     <div className="space-y-4">
                          <div className="relative">
@@ -168,14 +179,14 @@ export default function SearchAndFilter({ initialPosts, allCategories, error: in
                             <option value="TITLE_ASC">Título (A-Z)</option>
                             <option value="TITLE_DESC">Título (Z-A)</option>
                         </select>
-                        {availableTags.length > 0 && (
+                        {tagContext.length > 0 && (
                             <div className="p-2 border border-gray-200 rounded-lg">
                                 <div className="flex items-center gap-2 text-sm font-medium text-gray-600 mb-2">
                                     <TagIcon className="w-4 h-4" />
                                     <span>Refinar por Tags</span>
                                 </div>
                                 <div className="flex flex-wrap gap-2">
-                                    {availableTags.map(tag => (
+                                    {tagContext.map(tag => (
                                         <button
                                             key={tag}
                                             onClick={() => toggleTag(tag)}
@@ -194,9 +205,8 @@ export default function SearchAndFilter({ initialPosts, allCategories, error: in
                     </div>
                 </div>
 
-                {/* Footer do Filtro com contagem de soluções */}
+                {/* Footer do Filtro com contagem de soluções e filtros ativos */}
                 <div className="flex items-center justify-between pt-4 border-t border-gray-200">
-                    {/* Lado Esquerdo: Contagem de Soluções */}
                     <div className="text-sm text-gray-600">
                         {!loading && (
                             <>
@@ -204,25 +214,40 @@ export default function SearchAndFilter({ initialPosts, allCategories, error: in
                                 <span> {posts.length === 1 ? 'solução encontrada' : 'soluções encontradas'}</span>
                             </>
                         )}
-                        {loading && (
-                            <span className="italic">Buscando...</span>
-                        )}
+                        {loading && <span className="italic">Buscando...</span>}
                     </div>
-
-                    {/* Lado Direito: Filtros Ativos e Botão Limpar */}
                     {activeFilterCount > 0 && (
-                        <div className="flex items-center gap-3">
-                            <span className="text-sm text-gray-600">
-                                <span className="font-bold text-blue-600">{activeFilterCount}</span>
-                                <span> filtro(s) ativo(s)</span>
-                            </span>
+                        <div className="flex items-center gap-1.5">
                             <button onClick={clearFilters} className="flex items-center gap-1.5 text-sm font-semibold text-gray-500 hover:text-red-600 transition-colors">
                                 <ClearIcon className="w-4 h-4" />
-                                Limpar
+                                Limpar Tudo
                             </button>
                         </div>
                     )}
                 </div>
+
+                {/* Display de Filtros Ativos */}
+                {activeFilterCount > 0 && (
+                    <div className="flex flex-wrap items-center gap-2 pt-4 border-t border-gray-200">
+                        <span className="text-sm font-semibold text-gray-700">Filtros Ativos:</span>
+                        {selectedCategory !== 'all' && (
+                            <span className="inline-flex items-center gap-1.5 bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-1 rounded-full">
+                                {selectedCategory}
+                                <button onClick={() => setSelectedCategory('all')} className="text-blue-600 hover:text-blue-800">
+                                    <ClearIcon className="w-3 h-3" />
+                                </button>
+                            </span>
+                        )}
+                        {selectedTags.map(tag => (
+                            <span key={tag} className="inline-flex items-center gap-1.5 bg-gray-200 text-gray-800 text-xs font-medium px-2.5 py-1 rounded-full">
+                                {tag}
+                                <button onClick={() => toggleTag(tag)} className="text-gray-600 hover:text-gray-800">
+                                    <ClearIcon className="w-3 h-3" />
+                                </button>
+                            </span>
+                        ))}
+                    </div>
+                )}
             </div>
 
             {/* Grelha de Resultados */}
