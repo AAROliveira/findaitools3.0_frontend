@@ -4,7 +4,6 @@
  * @param variables As variáveis para a consulta.
  */
 async function fetchAPI(query: string, { variables }: { variables?: any } = {}) {
-    // No SSR/ISR (servidor), use a URL absoluta do WordPress; no client, use o proxy local
     const isServer = typeof window === 'undefined';
     const apiUrl = isServer
         ? process.env.NEXT_PUBLIC_WORDPRESS_API_URL || 'https://findaitools.com.br/graphql'
@@ -31,29 +30,28 @@ async function fetchAPI(query: string, { variables }: { variables?: any } = {}) 
     }
 }
 
-// Função auxiliar para formatar objetos para a query GraphQL
 const formatObjectForQuery = (obj: any): string => {
     return `{ ${Object.entries(obj).map(([key, value]) => {
         if (typeof value === 'object' && value !== null) {
             return `${key}: ${formatObjectForQuery(value)}`;
         }
-        // Garante que strings são envolvidas em aspas, mas números não
         return `${key}: ${typeof value === 'string' ? `"${value}"` : value}`;
     }).join(', ')} }`;
 };
 
-
 /**
- * Busca posts com base nos filtros fornecidos.
+ * Busca posts com base nos filtros e ordenação fornecidos.
  */
 export async function getFilteredPosts(filters: {
     category?: string;
     tags?: string[];
     searchTerm?: string;
-    dateQuery?: any; // Alterado para 'any' para aceitar estruturas complexas
+    dateQuery?: any;
+    orderBy?: { field: string; order: string }; // <-- ADDED: For sorting
 }) {
-    const { category, tags, searchTerm, dateQuery } = filters;
+    const { category, tags, searchTerm, dateQuery, orderBy } = filters;
 
+    // --- Build WHERE clause ---
     const whereClauses: string[] = [];
     if (category && category !== 'all') {
         whereClauses.push(`categoryName: "${category}"`);
@@ -69,11 +67,22 @@ export async function getFilteredPosts(filters: {
         whereClauses.push(`dateQuery: ${formatObjectForQuery(dateQuery)}`);
     }
 
-    const whereArg = whereClauses.length > 0 ? `where: { ${whereClauses.join(', ')} }` : '';
+    // --- Build ORDER BY clause ---
+    const orderByArg = orderBy ? `orderby: { field: ${orderBy.field}, order: ${orderBy.order} }` : '';
+
+    // --- Combine arguments ---
+    const args: string[] = [];
+    if (whereClauses.length > 0) {
+        args.push(`where: { ${whereClauses.join(', ')} }`);
+    }
+    if (orderByArg) {
+        args.push(orderByArg);
+    }
+    const finalArgs = args.join(', ');
 
     const query = `
         query GetFilteredPosts {
-          posts(first: 21, ${whereArg}) {
+          posts(first: 21, ${finalArgs}) {
             nodes {
               id
               title
@@ -81,6 +90,11 @@ export async function getFilteredPosts(filters: {
               date
               slug
               link
+              featuredImage {
+                node {
+                  sourceUrl(size: LARGE)
+                }
+              }
               categories {
                 nodes {
                   name
@@ -115,6 +129,23 @@ export async function getAllCategories() {
         }
     `;
     const data = await fetchAPI(query);
-    // Filtra categorias que não sejam "Uncategorized" (Sem categoria)
     return data?.categories?.nodes.filter((cat: { name: string }) => cat.name !== 'Uncategorized') || [];
+}
+
+/**
+ * Busca todas as tags de posts do WordPress.
+ */
+export async function getAllTags() {
+    const query = `
+        query GetAllTags {
+          tags(first: 200, where: { hideEmpty: true }) {
+            nodes {
+              id
+              name
+            }
+          }
+        }
+    `;
+    const data = await fetchAPI(query);
+    return data?.tags?.nodes || [];
 }

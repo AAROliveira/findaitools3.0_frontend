@@ -1,3 +1,11 @@
+## ⚠️ Alerta importante sobre integração com WordPress/GraphQL
+
+Todo acesso do frontend ao WordPress/GraphQL deve ser feito via o proxy local `/api/graphql`.
+Nunca faça fetch direto para o domínio do WordPress no código do frontend!
+O proxy está implementado em `src/app/api/graphql/route.ts` e elimina qualquer problema de CORS.
+No SSR/ISR (lado servidor), o `fetchAPI` monta a URL absoluta do proxy usando a variável de ambiente `NEXT_PUBLIC_SITE_URL`.
+No client (navegador), o `fetchAPI` usa o caminho relativo `/api/graphql`.
+Se mudar o domínio do frontend, lembre-se de atualizar `NEXT_PUBLIC_SITE_URL` no Vercel.
 # Preparação do Projeto Localmente
 
 ## 1. Instalar dependências
