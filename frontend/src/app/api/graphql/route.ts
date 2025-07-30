@@ -2,7 +2,8 @@ import { NextResponse } from 'next/server';
 
 export async function POST(request: Request) {
   const { query, variables } = await request.json();
-  const apiUrl = process.env.WORDPRESS_API_URL || process.env.NEXT_PUBLIC_WORDPRESS_API_URL || 'https://findaitools.com.br/graphql';
+  // Esta variável SÓ é lida no servidor, por isso não precisa de ser pública.
+  const apiUrl = process.env.WORDPRESS_API_URL;
 
   if (!apiUrl) {
     return NextResponse.json(
@@ -22,7 +23,7 @@ export async function POST(request: Request) {
         variables,
       }),
       // A revalidação pode ser controlada aqui se necessário
-      next: { revalidate: 10 },
+      next: { revalidate: 10 }, 
     });
 
     if (!response.ok) {

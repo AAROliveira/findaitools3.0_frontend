@@ -1,19 +1,19 @@
 /**
  * Função genérica para fazer pedidos à API local que faz proxy para o WPGraphQL.
+ * @param query A consulta GraphQL.
+ * @param variables As variáveis para a consulta.
  */
 async function fetchAPI(query: string, { variables }: { variables?: any } = {}) {
-    // Usa o endpoint proxy local em produção para evitar CORS
-    const isServer = typeof window === 'undefined';
-    const apiUrl = isServer
-        ? process.env.NEXT_PUBLIC_WORDPRESS_API_URL || 'https://findaitools.com.br/graphql'
-        : '/api/graphql';
+    // Aponta para o ponto de acesso local (proxy) que criámos
+    const apiUrl = '/api/graphql'; 
 
     try {
         const res = await fetch(apiUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ query, variables }),
-            cache: 'no-cache'
+            // 'no-cache' garante que os dados são sempre frescos ao filtrar no cliente
+            cache: 'no-cache' 
         });
 
         const json = await res.json();
@@ -52,7 +52,7 @@ export async function getFilteredPosts(filters: {
 }) {
     const { category, tags, searchTerm, dateQuery } = filters;
 
-    const whereClauses: string[] = [];
+    const whereClauses: string[] = []; 
     if (category && category !== 'all') {
         whereClauses.push(`categoryName: "${category}"`);
     }
@@ -64,7 +64,6 @@ export async function getFilteredPosts(filters: {
         whereClauses.push(`search: "${searchTerm}"`);
     }
     if (dateQuery) {
-        // CORREÇÃO: Usa a função auxiliar para formatar o objeto de data corretamente
         whereClauses.push(`dateQuery: ${formatObjectForQuery(dateQuery)}`);
     }
 
@@ -74,9 +73,22 @@ export async function getFilteredPosts(filters: {
         query GetFilteredPosts {
           posts(first: 21, ${whereArg}) {
             nodes {
-              id, title, excerpt, date, slug, link,
-              categories { nodes { name } },
-              tags { nodes { name } }
+              id
+              title
+              excerpt
+              date
+              slug
+              link
+              categories {
+                nodes {
+                  name
+                }
+              }
+              tags {
+                nodes {
+                  name
+                }
+              }
             }
           }
         }
@@ -101,5 +113,6 @@ export async function getAllCategories() {
         }
     `;
     const data = await fetchAPI(query);
+    // Filtra categorias que não sejam "Uncategorized" (Sem categoria)
     return data?.categories?.nodes.filter((cat: { name: string }) => cat.name !== 'Uncategorized') || [];
 }
