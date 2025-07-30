@@ -50,7 +50,12 @@ export function Chatbot() {
         setLoading(true);
 
         try {
-            const response = await fetch('/api/chat', {
+
+            // Em produção, tente usar uma URL absoluta se necessário
+            const apiUrl = typeof window === 'undefined'
+                ? process.env.NEXT_PUBLIC_BACKEND_URL || ''
+                : '/api/chat';
+            const response = await fetch(apiUrl, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ question: input }),

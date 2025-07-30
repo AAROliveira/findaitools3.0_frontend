@@ -2,14 +2,14 @@
  * Função genérica para fazer pedidos à API local que faz proxy para o WPGraphQL.
  */
 async function fetchAPI(query: string, { variables }: { variables?: any } = {}) {
-    const apiUrl = '/api/graphql'; 
+    const apiUrl = process.env.NEXT_PUBLIC_WORDPRESS_API_URL || 'https://findaitools.com.br/graphql';
 
     try {
         const res = await fetch(apiUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ query, variables }),
-            cache: 'no-cache' 
+            cache: 'no-cache'
         });
 
         const json = await res.json();
@@ -48,7 +48,7 @@ export async function getFilteredPosts(filters: {
 }) {
     const { category, tags, searchTerm, dateQuery } = filters;
 
-    const whereClauses: string[] = []; 
+    const whereClauses: string[] = [];
     if (category && category !== 'all') {
         whereClauses.push(`categoryName: "${category}"`);
     }
