@@ -3,6 +3,27 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { vertex } from '@ai-sdk/google-vertex';
 import { generateText } from 'ai';
+import { GoogleGenAI } from '@google/genai';
+// Lê e injeta as credenciais do Service Account a partir da variável GOOGLE_CREDENTIALS_BASE64
+function injectGoogleCredentialsFromBase64() {
+    const base64 = process.env.GOOGLE_CREDENTIALS_BASE64;
+    if (!base64) return;
+    try {
+        const json = Buffer.from(base64, 'base64').toString('utf-8');
+        const creds = JSON.parse(json);
+        // Injeta as variáveis de ambiente esperadas pelo SDK
+        process.env.GOOGLE_PROJECT_ID = creds.project_id;
+        process.env.GOOGLE_CLIENT_EMAIL = creds.client_email;
+        process.env.GOOGLE_PRIVATE_KEY = creds.private_key;
+        if (creds.private_key_id) process.env.GOOGLE_PRIVATE_KEY_ID = creds.private_key_id;
+        // Location pode ser fixo ou vir do .env, se não existir
+        if (!process.env.GOOGLE_LOCATION) process.env.GOOGLE_LOCATION = 'us-central1';
+    } catch (e) {
+        // Não lança erro, apenas loga para debug
+        console.error('Falha ao decodificar GOOGLE_CREDENTIALS_BASE64:', e);
+    }
+}
+// Importa o modelo de IA do Google Vertex AI
 
 
 // Função para inicializar o GoogleGenAI e configs // Não é mais necessário provider custom, pois o vertex() já lê as variáveis de ambiente padrão do Vercel
@@ -11,6 +32,8 @@ import { generateText } from 'ai';
 // Não é mais necessário provider custom, pois o vertex() já lê as variáveis de ambiente padrão do Vercel
 // Função principal da API que será chamada pelo frontend
 export async function POST(request: NextRequest) {
+    // Injeta as credenciais do Service Account no ambiente
+    injectGoogleCredentialsFromBase64();
     try {
         const { history, message } = await request.json();
 
