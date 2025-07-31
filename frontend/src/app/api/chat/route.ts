@@ -1,26 +1,24 @@
 // File: src/app/api/chat/route.ts
 
 import { NextRequest, NextResponse } from 'next/server';
-import { GoogleGenAI } from '@google/genai';
+import { VertexAI } from '@google-cloud/vertexai';
 
 
 // Função para inicializar o GoogleGenAI e configs
-function getGenAIConfig() {
+
+function getVertexAIConfig() {
     const project = process.env.GOOGLE_PROJECT_ID;
     const location = process.env.GOOGLE_LOCATION || 'us-central1';
-    const ragCorpus = process.env.GOOGLE_RAG_CORPUS; // Ex: 'projects/findaitools/locations/us-central1/ragCorpora/6917529027641081856'
+    const ragCorpus = process.env.GOOGLE_RAG_CORPUS;
 
     if (!project) throw new Error('A variável de ambiente GOOGLE_PROJECT_ID não está definida.');
     if (!ragCorpus) throw new Error('A variável de ambiente GOOGLE_RAG_CORPUS não está definida.');
 
-    const ai = new GoogleGenAI({
-        vertexai: true,
-        project,
-        location,
-    });
+    const vertexAI = new VertexAI({ project, location });
 
     // System instruction
     const systemInstruction = {
+        role: 'system',
         parts: [
             {
                 text: `Você é o assistente especialista do findaitools.com.br. Sua missão é ajudar usuários a encontrar a ferramenta de IA ideal.\nSiga estas regras OBRIGATÓRIAS:\n1. **Fluxo da Conversa:** Primeiro, faça perguntas para entender a real necessidade do usuário. Caso necessário, confirme seu entendimento com um resumo. Só então, busque e recomende as ferramentas.\n2. **Formato da Recomendação:**\n- Cada recomendação deve ser feita exatamente assim (sem campo 'Link' separado):\n[Nome da Ferramenta](https://findaitools.com.br/caminho-da-ferramenta): Descrição da ferramenta.\n- Exemplo:\n[AI Homeworkify](https://findaitools.com.br/educacao/ai-homeworkify): Ideal para obter explicações detalhadas sobre conceitos complexos, resolver exercícios práticos e acessar recursos complementares para estudo.`
@@ -45,25 +43,16 @@ function getGenAIConfig() {
         },
     ];
 
-    // Safety settings (opcional, pode customizar)
-    const safetySettings = [
-        { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'OFF' },
-        { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'OFF' },
-        { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'OFF' },
-        { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'OFF' },
-    ];
-
     // Generation config
     const generationConfig = {
         maxOutputTokens: 2040,
         temperature: 0.3,
         topP: 0.95,
-        safetySettings,
         tools,
         systemInstruction,
     };
 
-    return { ai, generationConfig };
+    return { vertexAI, generationConfig };
 }
 
 // Função principal da API que será chamada pelo frontend
@@ -75,8 +64,8 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'A mensagem do usuário é obrigatória.' }, { status: 400 });
         }
 
-        const { ai, generationConfig } = getGenAIConfig();
-        const model = ai.getGenerativeModel({ model: 'gemini-2.0-flash-001' });
+        const { vertexAI, generationConfig } = getVertexAIConfig();
+        const model = vertexAI.getGenerativeModel({ model: 'gemini-1.5-pro' });
 
         // Monta o contexto do chat (history)
         const chatHistory = Array.isArray(history) ? history : [];
