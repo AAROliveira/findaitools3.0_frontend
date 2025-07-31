@@ -1,3 +1,4 @@
+import { MarkdownMessage } from './MarkdownMessage';
 "use client";
 
 import { useState, useEffect } from "react";
@@ -149,7 +150,11 @@ export function Chatbot() {
                                         }`}
                                 >
                                     <div className="text-sm leading-relaxed whitespace-pre-wrap">
-                                        {message.content}
+                                        {message.role === "user" ? (
+                                            message.content
+                                        ) : (
+                                            <MarkdownMessage content={message.content} />
+                                        )}
                                     </div>
                                     <div
                                         className={`text-xs mt-2 opacity-70 ${message.role === "user" ? "text-blue-100" : "text-gray-500"

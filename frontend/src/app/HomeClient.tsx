@@ -24,8 +24,8 @@ export default function HomeClient({ initialPosts, allCategories, error }: HomeC
             <img
               src="/logo/Color logo - no background.svg"
               alt="FindAITools Logo"
-              className="h-10 w-auto"
-              style={{ maxWidth: '180px' }}
+              className="h-13 w-auto"
+              style={{ maxWidth: '234px' }}
             />
           </a>
           <nav className="hidden md:flex items-center gap-2 bg-gray-100 p-1 rounded-full">
