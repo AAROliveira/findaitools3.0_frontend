@@ -34,6 +34,7 @@ function injectGoogleCredentialsFromBase64() {
 export async function POST(request: NextRequest) {
     // Injeta as credenciais do Service Account no ambiente
     injectGoogleCredentialsFromBase64();
+    console.log('GOOGLE_CLIENT_EMAIL:', process.env.GOOGLE_CLIENT_EMAIL);
     try {
         const { history, message } = await request.json();
 
