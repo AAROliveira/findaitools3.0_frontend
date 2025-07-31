@@ -1,102 +1,53 @@
 // File: src/app/api/chat/route.ts
 
 import { NextRequest, NextResponse } from 'next/server';
-import { VertexAI } from '@google-cloud/vertexai';
+import { vertex } from '@ai-sdk/google-vertex';
+import { generateText } from 'ai';
 
 
 // Função para inicializar o GoogleGenAI e configs
 
-function getVertexAIConfig() {
-    const project = process.env.GOOGLE_PROJECT_ID;
-    const location = process.env.GOOGLE_LOCATION || 'us-central1';
-    const ragCorpus = process.env.GOOGLE_RAG_CORPUS;
 
-    if (!project) throw new Error('A variável de ambiente GOOGLE_PROJECT_ID não está definida.');
-    if (!ragCorpus) throw new Error('A variável de ambiente GOOGLE_RAG_CORPUS não está definida.');
 
-    const vertexAI = new VertexAI({ project, location });
+// Não é mais necessário provider custom, pois o vertex() já lê as variáveis de ambiente padrão do Vercel
 
-    // System instruction
-    const systemInstruction = {
-        role: 'system',
-        parts: [
-            {
-                text: `Você é o assistente especialista do findaitools.com.br. Sua missão é ajudar usuários a encontrar a ferramenta de IA ideal.\nSiga estas regras OBRIGATÓRIAS:\n1. **Fluxo da Conversa:** Primeiro, faça perguntas para entender a real necessidade do usuário. Caso necessário, confirme seu entendimento com um resumo. Só então, busque e recomende as ferramentas.\n2. **Formato da Recomendação:**\n- Cada recomendação deve ser feita exatamente assim (sem campo 'Link' separado):\n[Nome da Ferramenta](https://findaitools.com.br/caminho-da-ferramenta): Descrição da ferramenta.\n- Exemplo:\n[AI Homeworkify](https://findaitools.com.br/educacao/ai-homeworkify): Ideal para obter explicações detalhadas sobre conceitos complexos, resolver exercícios práticos e acessar recursos complementares para estudo.`
-            }
-        ]
-    };
-
-    // Tools (RAG)
-    const tools = [
-        {
-            retrieval: {
-                vertexRagStore: {
-                    ragResources: [
-                        {
-                            ragResource: {
-                                ragCorpus: ragCorpus,
-                            },
-                        },
-                    ],
-                },
-            },
-        },
-    ];
-
-    // Generation config
-    const generationConfig = {
-        maxOutputTokens: 2040,
-        temperature: 0.3,
-        topP: 0.95,
-        tools,
-        systemInstruction,
-    };
-
-    return { vertexAI, generationConfig };
-}
 
 // Função principal da API que será chamada pelo frontend
-export async function POST(req: NextRequest) {
+export async function POST(request: NextRequest) {
     try {
-        const { history, message } = await req.json();
+        const { history, message } = await request.json();
 
         if (!message) {
             return NextResponse.json({ error: 'A mensagem do usuário é obrigatória.' }, { status: 400 });
         }
 
-        const { vertexAI, generationConfig } = getVertexAIConfig();
-        const model = vertexAI.getGenerativeModel({ model: 'gemini-1.5-pro' });
+        // Monta o prompt concatenando o histórico (se houver)
+        const prompt = [
+            ...(Array.isArray(history) ? history.map(h => h.parts?.[0]?.text || '') : []),
+            message
+        ].join('\n');
 
-        // Monta o contexto do chat (history)
-        const chatHistory = Array.isArray(history) ? history : [];
-        const contents = [
-            ...chatHistory,
-            { role: 'user', parts: [{ text: message }] },
-        ];
-
-        // Chama a API Gemini
-        const result = await model.generateContent({
-            contents,
-            generationConfig,
+        // Chama o modelo Gemini 2.0 Flash
+        const { text } = await generateText({
+            model: vertex('gemini-2.0-flash-001', {
+                systemInstruction: {
+                    role: 'system',
+                    parts: [
+                        {
+                            text: `Você é o assistente especialista do findaitools.com.br. Sua missão é ajudar usuários a encontrar a ferramenta de IA ideal.\nSiga estas regras OBRIGATÓRIAS:\n1. **Fluxo da Conversa:** Primeiro, faça perguntas para entender a real necessidade do usuário. Caso necessário, confirme seu entendimento com um resumo. Só então, busque e recomende as ferramentas.\n2. **Formato da Recomendação:**\n- Cada recomendação deve ser feita exatamente assim (sem campo 'Link' separado):\n[Nome da Ferramenta](https://findaitools.com.br/caminho-da-ferramenta): Descrição da ferramenta.\n- Exemplo:\n[AI Homeworkify](https://findaitools.com.br/educacao/ai-homeworkify): Ideal para obter explicações detalhadas sobre conceitos complexos, resolver exercícios práticos e acessar recursos complementares para estudo.`
+                        }
+                    ]
+                },
+                // Adicione outras opções como safetySettings, tools, etc, se necessário
+            }),
+            prompt,
         });
-
-        // Resposta do modelo
-        const text = result?.response?.candidates?.[0]?.content?.parts?.[0]?.text;
-        if (!text) {
-            console.error('Resposta inválida ou vazia recebida do modelo Gemini:', JSON.stringify(result, null, 2));
-            throw new Error('Resposta inválida do modelo Gemini.');
-        }
 
         return NextResponse.json({ response: text });
 
     } catch (error: any) {
         // Log de erro mais detalhado
-        console.error('ERRO NA API DO CHAT:', {
-            message: error.message,
-            stack: error.stack,
-            details: error.details,
-        });
-
+        console.error('ERRO NA API DO CHAT:', error);
         return NextResponse.json(
             { error: 'Ocorreu um erro ao comunicar com o assistente de IA.' },
             { status: 500 }
