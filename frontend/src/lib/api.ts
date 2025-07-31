@@ -101,7 +101,7 @@ export async function getFilteredPosts(filters: {
               hasNextPage
               endCursor
             }
-            count
+            // count removido: não existe no schema padrão
           }
         }
     `;
