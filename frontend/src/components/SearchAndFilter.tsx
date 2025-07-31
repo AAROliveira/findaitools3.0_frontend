@@ -203,29 +203,7 @@ export default function SearchAndFilter({ initialPosts, allCategories, error: in
                     </select>
                 </div>
 
-                {/* Seção de Tags (agora em uma nova linha) */}
-                {tagContext.length > 0 && (
-                    <div className="p-2 border border-gray-200 rounded-lg">
-                        <div className="flex items-center gap-2 text-sm font-medium text-gray-600 mb-2">
-                            <TagIcon className="w-4 h-4" />
-                            <span>Refinar por Tags</span>
-                        </div>
-                        <div className="flex flex-wrap gap-2">
-                            {tagContext.map(tag => (
-                                <button
-                                    key={tag.slug}
-                                    onClick={() => toggleTag(tag)}
-                                    className={`px-2 py-0.5 text-xs rounded-full border transition-all duration-200 ${selectedTags.some(t => t.slug === tag.slug)
-                                            ? 'bg-blue-600 text-white border-blue-600'
-                                            : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-100'
-                                        }`}
-                                >
-                                    {tag.name}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-                )}
+                {/* Seção de Tags temporariamente removida por solicitação do cliente */}
 
                 {/* Footer do Filtro */}
                 <div className="flex items-center justify-between pt-4 border-t border-gray-200">
