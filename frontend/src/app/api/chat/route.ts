@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { vertex } from '@ai-sdk/google-vertex';
 import { generateText } from 'ai';
 import { GoogleGenAI } from '@google/genai';
+
 // Lê e injeta as credenciais do Service Account a partir da variável GOOGLE_CREDENTIALS_BASE64
 function injectGoogleCredentialsFromBase64() {
     const base64 = process.env.GOOGLE_CREDENTIALS_BASE64;
