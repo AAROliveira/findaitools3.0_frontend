@@ -9,7 +9,7 @@ const SearchIcon = (props) => (<svg xmlns="http://www.w3.org/2000/svg" width="24
 const ExternalLinkIcon = (props) => (<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>);
 const CalendarIcon = (props) => (<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>);
 const LoaderIcon = (props) => (<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="animate-spin" {...props}><line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line></svg>);
-const TagIcon = (props) => (<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M12.586 2.586a2 2 0 0 0-2.828 0L2.172 10.172a2 2 0 0 0 0 2.828l7.414 7.414a2 2 0 0 0 2.828 0l7.586-7.586a2 2 0 0 0 0-2.828z"/><circle cx="16" cy="8" r="1"/></svg>);
+const TagIcon = (props) => (<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M12.586 2.586a2 2 0 0 0-2.828 0L2.172 10.172a2 2 0 0 0 0 2.828l7.414 7.414a2 2 0 0 0 2.828 0l7.586-7.586a2 2 0 0 0 0-2.828z" /><circle cx="16" cy="8" r="1" /></svg>);
 const ClearIcon = (props) => (<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>);
 
 // --- Interfaces ---
@@ -19,7 +19,7 @@ export interface Post {
     excerpt: string;
     url: string;
     category: string;
-    tags: string[];
+    tags: { name: string; slug: string }[];
     publishDate: string;
     imageUrl?: string;
 }
@@ -38,8 +38,8 @@ export default function SearchAndFilter({ initialPosts, allCategories, error: in
     const [loading, setLoading] = useState(false);
     const [loadingMore, setLoadingMore] = useState(false);
     const [error, setError] = useState<string | null>(initialError);
-    const [tagContext, setTagContext] = useState<string[]>([]);
-    
+    const [tagContext, setTagContext] = useState<{ name: string; slug: string }[]>([]);
+
     // --- Estado de Paginação ---
     const [hasNextPage, setHasNextPage] = useState(false);
     const [endCursor, setEndCursor] = useState<string | null>(null);
@@ -47,7 +47,7 @@ export default function SearchAndFilter({ initialPosts, allCategories, error: in
     // --- Estado dos Filtros ---
     const [searchTerm, setSearchTerm] = useState("");
     const [selectedCategory, setSelectedCategory] = useState<string>("all");
-    const [selectedTags, setSelectedTags] = useState<string[]>([]);
+    const [selectedTags, setSelectedTags] = useState<{ name: string; slug: string }[]>([]);
     const [sortBy, setSortBy] = useState("DATE_DESC");
 
     const isInitialMount = useRef(true);
@@ -80,12 +80,12 @@ export default function SearchAndFilter({ initialPosts, allCategories, error: in
             setLoading(true);
         }
         setError(null);
-        
+
         const [field, order] = sortBy.split('_');
         const filters = {
             searchTerm: searchTerm || undefined,
             category: selectedCategory !== 'all' ? selectedCategory : undefined,
-            tags: selectedTags.length > 0 ? selectedTags : undefined,
+            tags: selectedTags.length > 0 ? selectedTags.map(t => t.slug) : undefined,
             orderBy: { field, order },
             after: isLoadingMore && endCursor ? endCursor : undefined,
         };
@@ -93,7 +93,7 @@ export default function SearchAndFilter({ initialPosts, allCategories, error: in
         try {
             const postsData = await getFilteredPosts(filters);
             const newPosts = mapApiDataToPosts(postsData?.nodes || []);
-            
+
             if (isLoadingMore) {
                 setPosts(prevPosts => [...prevPosts, ...newPosts]);
             } else {
@@ -114,11 +114,16 @@ export default function SearchAndFilter({ initialPosts, allCategories, error: in
             setLoadingMore(false);
         }
     };
-    
-    const extractTags = (data: Post[]): string[] => {
+
+    const extractTags = (data: Post[]): { name: string; slug: string }[] => {
         if (!data || data.length === 0) return [];
         const allTags = data.flatMap(post => post.tags);
-        return Array.from(new Set(allTags)).sort();
+        // Remover duplicatas por slug
+        const unique = new Map();
+        allTags.forEach(tag => {
+            if (tag && tag.slug) unique.set(tag.slug, tag);
+        });
+        return Array.from(unique.values()).sort((a, b) => a.name.localeCompare(b.name));
     };
 
     const mapApiDataToPosts = (data: any[]): Post[] => {
@@ -130,17 +135,19 @@ export default function SearchAndFilter({ initialPosts, allCategories, error: in
             url: post.link,
             imageUrl: post.featuredImage?.node?.sourceUrl,
             category: post.categories?.nodes?.[0]?.name || 'Geral',
-            tags: Array.isArray(post.tags?.nodes) ? post.tags.nodes.map((t: any) => t.name) : [],
+            tags: Array.isArray(post.tags?.nodes)
+                ? post.tags.nodes.map((t: any) => ({ name: t.name, slug: t.slug }))
+                : [],
             publishDate: new Date(post.date).toISOString(),
         }));
     };
 
     // --- Handlers de Filtro ---
-    const toggleTag = (tagName: string) => {
+    const toggleTag = (tag: { name: string; slug: string }) => {
         setSelectedTags(prevTags =>
-            prevTags.includes(tagName)
-                ? prevTags.filter(t => t !== tagName)
-                : [...prevTags, tagName]
+            prevTags.some(t => t.slug === tag.slug)
+                ? prevTags.filter(t => t.slug !== tag.slug)
+                : [...prevTags, tag]
         );
     };
 
@@ -206,15 +213,14 @@ export default function SearchAndFilter({ initialPosts, allCategories, error: in
                         <div className="flex flex-wrap gap-2">
                             {tagContext.map(tag => (
                                 <button
-                                    key={tag}
+                                    key={tag.slug}
                                     onClick={() => toggleTag(tag)}
-                                    className={`px-2 py-0.5 text-xs rounded-full border transition-all duration-200 ${
-                                        selectedTags.includes(tag)
+                                    className={`px-2 py-0.5 text-xs rounded-full border transition-all duration-200 ${selectedTags.some(t => t.slug === tag.slug)
                                             ? 'bg-blue-600 text-white border-blue-600'
                                             : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-100'
-                                    }`}
+                                        }`}
                                 >
-                                    {tag}
+                                    {tag.name}
                                 </button>
                             ))}
                         </div>
@@ -255,8 +261,8 @@ export default function SearchAndFilter({ initialPosts, allCategories, error: in
                             </span>
                         )}
                         {selectedTags.map(tag => (
-                            <span key={tag} className="inline-flex items-center gap-1.5 bg-gray-200 text-gray-800 text-xs font-medium px-2.5 py-1 rounded-full">
-                                {tag}
+                            <span key={tag.slug} className="inline-flex items-center gap-1.5 bg-gray-200 text-gray-800 text-xs font-medium px-2.5 py-1 rounded-full">
+                                {tag.name}
                                 <button onClick={() => toggleTag(tag)} className="text-gray-600 hover:text-gray-800">
                                     <ClearIcon className="w-3 h-3" />
                                 </button>
@@ -284,8 +290,8 @@ export default function SearchAndFilter({ initialPosts, allCategories, error: in
                                 {posts.map((post) => (
                                     <div key={post.id} className="h-full bg-white rounded-xl border border-gray-200 shadow-md hover:shadow-xl transition-shadow duration-300 cursor-pointer group flex flex-col overflow-hidden" onClick={() => onPostSelect?.(post)}>
                                         <div className="aspect-video w-full overflow-hidden">
-                                            <img 
-                                                src={post.imageUrl || 'https://placehold.co/600x400/EEE/31343C?text=Sem+Imagem'} 
+                                            <img
+                                                src={post.imageUrl || 'https://placehold.co/600x400/EEE/31343C?text=Sem+Imagem'}
                                                 alt={`Imagem de ${post.title}`}
                                                 className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                                             />
@@ -303,7 +309,7 @@ export default function SearchAndFilter({ initialPosts, allCategories, error: in
                                             </div>
                                             <p className="text-gray-600 text-sm my-4 h-16 line-clamp-3">{post.excerpt}</p>
                                             <div className="flex flex-wrap gap-2 mt-auto">
-                                                {post.tags.slice(0, 3).map(tag => <span key={tag} className="px-2 py-1 text-xs bg-gray-100 text-gray-700 rounded-full border border-gray-200">{tag}</span>)}
+                                                {post.tags.slice(0, 3).map(tag => <span key={tag.slug} className="px-2 py-1 text-xs bg-gray-100 text-gray-700 rounded-full border border-gray-200">{tag.name}</span>)}
                                             </div>
                                         </div>
                                     </div>
