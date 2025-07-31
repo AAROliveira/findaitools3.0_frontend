@@ -101,6 +101,7 @@ export async function getFilteredPosts(filters: {
               hasNextPage
               endCursor
             }
+            count
           }
         }
     `;

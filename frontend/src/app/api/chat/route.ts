@@ -15,6 +15,11 @@ function injectGoogleCredentialsFromBase64() {
         process.env.GOOGLE_CLIENT_EMAIL = creds.client_email;
         process.env.GOOGLE_PRIVATE_KEY = creds.private_key;
         if (!process.env.GOOGLE_LOCATION) process.env.GOOGLE_LOCATION = 'us-central1';
+        // Escreve o JSON em um arquivo temporário e aponta GOOGLE_APPLICATION_CREDENTIALS para ele
+        const fs = require('fs');
+        const tmpPath = '/tmp/gcp-creds.json';
+        fs.writeFileSync(tmpPath, json);
+        process.env.GOOGLE_APPLICATION_CREDENTIALS = tmpPath;
     } catch (e) {
         console.error('Falha ao decodificar GOOGLE_CREDENTIALS_BASE64:', e);
     }
