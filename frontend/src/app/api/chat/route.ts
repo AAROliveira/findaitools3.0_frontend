@@ -35,7 +35,30 @@ export async function POST(request: NextRequest) {
                         }
                     ]
                 },
-                // Adicione outras opções como safetySettings, tools, etc, se necessário
+                tools: [
+                    {
+                        retrieval: {
+                            vertexRagStore: {
+                                ragResources: [
+                                    {
+                                        ragResource: {
+                                            ragCorpus: process.env.GOOGLE_RAG_CORPUS,
+                                        },
+                                    },
+                                ],
+                            },
+                        },
+                    },
+                ],
+                safetySettings: [
+                    { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'OFF' },
+                    { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'OFF' },
+                    { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'OFF' },
+                    { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'OFF' },
+                ],
+                maxOutputTokens: 2040,
+                temperature: 0.3,
+                topP: 0.95,
             }),
             prompt,
         });
