@@ -55,8 +55,8 @@ function getGenAIConfig() {
 
     // Generation config
     const generationConfig = {
-        maxOutputTokens: 8192,
-        temperature: 1,
+        maxOutputTokens: 2040,
+        temperature: 0.3,
         topP: 0.95,
         safetySettings,
         tools,
