@@ -5,13 +5,10 @@ import { vertex } from '@ai-sdk/google-vertex';
 import { generateText } from 'ai';
 
 
-// Função para inicializar o GoogleGenAI e configs
-
+// Função para inicializar o GoogleGenAI e configs // Não é mais necessário provider custom, pois o vertex() já lê as variáveis de ambiente padrão do Vercel
 
 
 // Não é mais necessário provider custom, pois o vertex() já lê as variáveis de ambiente padrão do Vercel
-
-
 // Função principal da API que será chamada pelo frontend
 export async function POST(request: NextRequest) {
     try {
