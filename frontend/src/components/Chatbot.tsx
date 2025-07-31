@@ -1,5 +1,6 @@
-import { MarkdownMessage } from './MarkdownMessage';
+
 "use client";
+import { MarkdownMessage } from './MarkdownMessage';
 
 import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
