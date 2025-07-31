@@ -54,19 +54,22 @@ export function Chatbot() {
         setInput("");
         setLoading(true);
 
+
         try {
-            // O histórico enviado para a API deve ser o estado ANTES da nova mensagem do usuário
-            const historyForApi = messages.map(msg => ({
-                role: msg.role === 'assistant' ? 'model' : 'user',
-                parts: [{ text: msg.content }]
-            }));
+            // Monta o array de mensagens para a API (inclui o histórico + nova mensagem do usuário)
+            const messagesForApi = [
+                ...messages.map(msg => ({
+                    role: msg.role,
+                    content: msg.content
+                })),
+                { role: "user", content: currentInput }
+            ];
 
             const response = await fetch('/api/chat', {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    history: historyForApi,
-                    message: currentInput
+                    messages: messagesForApi
                 }),
             });
 
