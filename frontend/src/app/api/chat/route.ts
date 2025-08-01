@@ -1,8 +1,8 @@
 // File: src/app/api/chat/route.ts
 
 import { NextRequest, NextResponse } from 'next/server';
-import { vertex } from '@ai-sdk/google-vertex';
-import { generateText, convertToCoreMessages } from 'ai';
+// Importação compatível com Node.js para ambientes serverless
+const { VertexAI, HarmCategory, HarmBlockThreshold } = require('@google-cloud/vertexai');
 
 // Lê e injeta as credenciais do Service Account a partir da variável GOOGLE_CREDENTIALS_BASE64
 function injectGoogleCredentialsFromBase64() {
@@ -32,18 +32,30 @@ function injectGoogleCredentialsFromBase64() {
 
 // Não é mais necessário provider custom, pois o vertex() já lê as variáveis de ambiente padrão do Vercel
 // Função principal da API que será chamada pelo frontend
+
 export async function POST(request: NextRequest) {
     injectGoogleCredentialsFromBase64();
     try {
-        const { messages } = await request.json();
-
-        if (!messages || messages.length === 0) {
+        const body = await request.json();
+        let messages: any[] = [];
+        if (body && Array.isArray(body.messages)) {
+            messages = body.messages;
+        }
+        if (!Array.isArray(messages) || messages.length === 0) {
             return NextResponse.json({ error: 'A lista de mensagens é obrigatória.' }, { status: 400 });
         }
 
-        const { text } = await generateText({
-            model: vertex('gemini-2.5-flash-lite', {
-                system: `Você é o assistente do www.findaitools.com.br. As recomendações de  ferramentas de IA DEVEM ser baseadas EXCLUSIVAMENTE no banco de dados findaitools.com.br (corpus RAG). Nunca invente ferramentas, nomes ou links. Sempre que recomendar uma ferramenta, busque no corpus findaitools.com.br e retorne:
+        const vertexAI = new VertexAI({
+            project: process.env.GOOGLE_PROJECT_ID,
+            location: process.env.GOOGLE_LOCATION || 'us-central1',
+        });
+        const model = vertexAI.getGenerativeModel({
+            model: 'gemini-2.5-flash-lite',
+            systemInstruction: {
+                role: 'system',
+                parts: [
+                    {
+                        text: `Você é o assistente do www.findaitools.com.br. As recomendações de  ferramentas de IA DEVEM ser baseadas EXCLUSIVAMENTE no banco de dados findaitools.com.br (corpus RAG). Nunca invente ferramentas, nomes ou links. Sempre que recomendar uma ferramenta, busque no corpus findaitools.com.br e retorne:
 
                 Nome da ferramenta
                 Descrição
@@ -55,35 +67,46 @@ export async function POST(request: NextRequest) {
                 **Descrição:** Plataforma de IA conversacional para geração de texto.
                 **Link:** https://findaitools.com.br/category/title
 
-                Sempre use esse formato e sempre cite o link findaitools.com.br.`,
-                tools: {
+                Sempre use esse formato e sempre cite o link findaitools.com.br.`
+                    }
+                ]
+            },
+            tools: [
+                {
+                    type: 'retrieval',
                     retrieval: {
                         vertexRagStore: {
                             ragResources: [
-                            {
-                                ragResource: {
-                                ragCorpus: 'projects/findaitools/locations/us-central1/ragCorpora/6917529027641081856',
+                                {
+                                    ragCorpus: process.env.GOOGLE_RAG_CORPUS,
                                 },
-                            },
                             ],
                         },
                     },
                 },
-                safetySettings: [
-                    { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_NONE' },
-                    { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' },
-                    { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_NONE' },
-                    { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_NONE' },
-                ],
+            ],
+            safetySettings: [
+                { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_NONE },
+                { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_NONE },
+                { category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_NONE },
+                { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_NONE },
+            ],
+            generationConfig: {
                 maxOutputTokens: 2048,
                 temperature: 0.3,
                 topP: 0.95,
-            }),
-            messages: convertToCoreMessages(messages),
+            },
         });
 
-        return NextResponse.json({ response: text });
+        const history = messages.filter((msg) => msg && msg.role !== 'system' && typeof msg.content === 'string').map((msg) => ({
+            role: msg.role,
+            parts: [{ text: msg.content }],
+        }));
 
+        const result = await model.generateContent({ contents: history });
+        const text = result?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+
+        return NextResponse.json({ response: text });
     } catch (error: any) {
         console.error('ERRO NA API DO CHAT:', error);
         return NextResponse.json(
