@@ -2,6 +2,8 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
+// Importa AnimatePresence e motion para animar a grade de resultados
+import { AnimatePresence, motion } from "@/components/ui/motion";
 import { getFilteredPosts } from "@/lib/api";
 
 // --- Ícones SVG ---
@@ -164,166 +166,198 @@ export default function SearchAndFilter({ initialPosts, allCategories, error: in
         selectedTags.length;
 
     // --- Renderização ---
+    // Layout principal: barra lateral esquerda fixa para filtros, conteúdo à direita para resultados
+    // Responsivo: coluna única em mobile, duas colunas a partir de md
     return (
-        <div className="w-full max-w-7xl mx-auto space-y-8 p-4">
-            <div className="bg-white border border-gray-200 rounded-xl shadow-sm p-6 space-y-4">
-                {/* Grade Principal de Filtros */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {/* Item 1: Busca */}
-                    <div className="relative">
-                        <SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
-                        <input
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            placeholder="Buscar por nome ou palavra-chave..."
-                            className="w-full pl-12 pr-4 py-3 text-base h-full rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition"
-                        />
-                    </div>
-                    {/* Item 2: Categoria */}
-                    <select
-                        value={selectedCategory}
-                        onChange={(e) => setSelectedCategory(e.target.value)}
-                        className="w-full h-full px-4 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 bg-white transition"
-                    >
-                        <option value="all">Todas as Categorias</option>
-                        {allCategories.map(cat => (
-                            <option key={cat.id} value={cat.name}>{cat.name}</option>
-                        ))}
-                    </select>
-                    {/* Item 3: Ordenação */}
-                    <select
-                        value={sortBy}
-                        onChange={(e) => setSortBy(e.target.value)}
-                        className="w-full h-full px-4 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 bg-white transition"
-                    >
-                        <option value="DATE_DESC">Mais Recentes</option>
-                        <option value="DATE_ASC">Mais Antigos</option>
-                        <option value="TITLE_ASC">Título (A-Z)</option>
-                        <option value="TITLE_DESC">Título (Z-A)</option>
-                    </select>
+        <div className="w-full max-w-7xl mx-auto p-4">
+            {/* Barra de busca no topo */}
+            <div className="mb-6">
+                <div className="relative max-w-xl mx-auto">
+                    <SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+                    <input
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        placeholder="Buscar por nome ou palavra-chave..."
+                        className="w-full pl-12 pr-4 py-3 text-base h-full rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition"
+                    />
                 </div>
+            </div>
 
-                {/* Seção de Tags temporariamente removida por solicitação do cliente */}
-
-                {/* Footer do Filtro */}
-                <div className="flex items-center justify-between pt-4 border-t border-gray-200">
-                    <div className="text-sm text-gray-600">
-                        {!loading && (
-                            <>
-                                <span className="font-bold text-gray-800">{posts.length}</span>
-                                <span> {posts.length === 1 ? 'ferramenta encontrada' : 'ferramentas encontradas'}</span>
-                            </>
-                        )}
-                        {loading && <span className="italic">Buscando...</span>}
+            {/* Grid de layout: aside (filtros) + main (resultados) */}
+            <div className="grid grid-cols-1 md:grid-cols-[250px_1fr] gap-8">
+                {/* Barra lateral esquerda: filtros */}
+                <aside className="space-y-8">
+                    {/* Filtro de Categorias como links/botões */}
+                    <div className="space-y-2">
+                        <h3 className="font-semibold px-2">Categorias</h3>
+                        <button
+                            onClick={() => setSelectedCategory('all')}
+                            className={`block w-full text-left px-2 py-1.5 rounded-md ${selectedCategory === 'all' ? 'bg-blue-100 text-blue-800 font-bold' : 'hover:bg-gray-100'}`}
+                        >
+                            Todas
+                        </button>
+                        {allCategories.map(cat => (
+                            <button
+                                key={cat.id}
+                                onClick={() => setSelectedCategory(cat.name)}
+                                className={`block w-full text-left px-2 py-1.5 rounded-md ${selectedCategory === cat.name ? 'bg-blue-100 text-blue-800 font-bold' : 'hover:bg-gray-100'}`}
+                            >
+                                {cat.name}
+                            </button>
+                        ))}
                     </div>
+
+                    {/* Filtro de Ordenação */}
+                    <div className="space-y-2">
+                        <h3 className="font-semibold px-2">Ordenar por</h3>
+                        <select
+                            value={sortBy}
+                            onChange={(e) => setSortBy(e.target.value)}
+                            className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 bg-white transition"
+                        >
+                            <option value="DATE_DESC">Mais Recentes</option>
+                            <option value="DATE_ASC">Mais Antigos</option>
+                            <option value="TITLE_ASC">Título (A-Z)</option>
+                            <option value="TITLE_DESC">Título (Z-A)</option>
+                        </select>
+                    </div>
+
+                    {/* Botão Limpar Filtros */}
                     {activeFilterCount > 0 && (
-                        <div className="flex items-center gap-1.5">
+                        <div className="pt-2">
                             <button onClick={clearFilters} className="flex items-center gap-1.5 text-sm font-semibold text-gray-500 hover:text-red-600 transition-colors">
                                 <ClearIcon className="w-4 h-4" />
                                 Limpar Tudo
                             </button>
                         </div>
                     )}
-                </div>
+                </aside>
 
-                {/* Display de Filtros Ativos */}
-                {activeFilterCount > 0 && (
-                    <div className="flex flex-wrap items-center gap-2 pt-4 border-t border-gray-200">
-                        <span className="text-sm font-semibold text-gray-700">Filtros Ativos:</span>
-                        {selectedCategory !== 'all' && (
-                            <span className="inline-flex items-center gap-1.5 bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-1 rounded-full">
-                                {selectedCategory}
-                                <button onClick={() => setSelectedCategory('all')} className="text-blue-600 hover:text-blue-800">
-                                    <ClearIcon className="w-3 h-3" />
-                                </button>
-                            </span>
-                        )}
-                        {selectedTags.map(tag => (
-                            <span key={tag.slug} className="inline-flex items-center gap-1.5 bg-gray-200 text-gray-800 text-xs font-medium px-2.5 py-1 rounded-full">
-                                {tag.name}
-                                <button onClick={() => toggleTag(tag)} className="text-gray-600 hover:text-gray-800">
-                                    <ClearIcon className="w-3 h-3" />
-                                </button>
-                            </span>
-                        ))}
-                    </div>
-                )}
-            </div>
-
-            {/* Grelha de Resultados */}
-            <div className="space-y-8">
-                {loading && (
-                    <div className="text-center py-16 flex justify-center items-center gap-3 text-gray-600">
-                        <LoaderIcon className="w-6 h-6" />
-                        <span className="text-lg">Carregando ferramentas...</span>
-                    </div>
-                )}
-                {error && (
-                    <div className="text-red-500 text-center py-16">{error}</div>
-                )}
-                {!loading && !error && (
-                    <div>
-                        {posts.length > 0 ? (
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                {posts.map((post) => (
-                                    <div key={post.id} className="h-full bg-white rounded-xl border border-gray-200 shadow-md hover:shadow-xl transition-shadow duration-300 cursor-pointer group flex flex-col overflow-hidden" onClick={() => onPostSelect?.(post)}>
-                                        <div className="aspect-video w-full overflow-hidden">
-                                            <img
-                                                src={post.imageUrl || 'https://placehold.co/600x400/EEE/31343C?text=Sem+Imagem'}
-                                                alt={`Imagem de ${post.title}`}
-                                                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                                            />
-                                        </div>
-                                        <div className="p-5 flex-grow flex flex-col">
-                                            <div className="flex items-start justify-between gap-3">
-                                                <h3 className="text-lg font-bold text-gray-800 group-hover:text-blue-600 line-clamp-2 flex-grow">{post.title}</h3>
-                                                <a href={post.url} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="flex-shrink-0">
-                                                    <ExternalLinkIcon className="w-5 h-5 text-gray-400 hover:text-blue-500" />
-                                                </a>
-                                            </div>
-                                            <div className="flex items-center gap-2 text-sm text-gray-500 pt-1">
-                                                <CalendarIcon className="w-4 h-4" />
-                                                <span>{new Date(post.publishDate).toLocaleDateString("pt-BR")}</span>
-                                            </div>
-                                            <p className="text-gray-600 text-sm my-4 h-16 line-clamp-3">{post.excerpt}</p>
-                                            <div className="flex flex-wrap gap-2 mt-auto">
-                                                {post.tags.slice(0, 3).map(tag => <span key={tag.slug} className="px-2 py-1 text-xs bg-gray-100 text-gray-700 rounded-full border border-gray-200">{tag.name}</span>)}
-                                            </div>
-                                        </div>
-                                    </div>
+                {/* Conteúdo principal: resultados */}
+                <main className="space-y-6">
+                    {/* Contador de resultados e filtros ativos */}
+                    <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-gray-200">
+                        <div className="text-sm text-gray-600">
+                            {!loading && (
+                                <>
+                                    <span className="font-bold text-gray-800">{posts.length}</span>
+                                    <span> {posts.length === 1 ? 'ferramenta encontrada' : 'ferramentas encontradas'}</span>
+                                </>
+                            )}
+                            {loading && <span className="italic">Buscando...</span>}
+                        </div>
+                        {activeFilterCount > 0 && (
+                            <div className="flex flex-wrap items-center gap-2">
+                                <span className="text-sm font-semibold text-gray-700">Filtros Ativos:</span>
+                                {selectedCategory !== 'all' && (
+                                    <span className="inline-flex items-center gap-1.5 bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-1 rounded-full">
+                                        {selectedCategory}
+                                        <button onClick={() => setSelectedCategory('all')} className="text-blue-600 hover:text-blue-800">
+                                            <ClearIcon className="w-3 h-3" />
+                                        </button>
+                                    </span>
+                                )}
+                                {selectedTags.map(tag => (
+                                    <span key={tag.slug} className="inline-flex items-center gap-1.5 bg-gray-200 text-gray-800 text-xs font-medium px-2.5 py-1 rounded-full">
+                                        {tag.name}
+                                        <button onClick={() => toggleTag(tag)} className="text-gray-600 hover:text-gray-800">
+                                            <ClearIcon className="w-3 h-3" />
+                                        </button>
+                                    </span>
                                 ))}
                             </div>
-                        ) : (
-                            <div className="text-center py-16">
-                                <div className="inline-block bg-gray-100 p-5 rounded-full mb-4">
-                                    <SearchIcon className="text-gray-400 w-12 h-12" />
-                                </div>
-                                <h3 className="text-2xl font-semibold text-gray-800 mt-4 mb-2">Nenhum resultado encontrado</h3>
-                                <p className="text-gray-500 max-w-md mx-auto">Tente ajustar seus filtros ou usar palavras-chave diferentes para encontrar a ferramenta de IA que você procura.</p>
-                            </div>
                         )}
                     </div>
-                )}
 
-                {/* Botão Carregar Mais */}
-                {!loading && hasNextPage && (
-                    <div className="text-center">
-                        <button
-                            onClick={() => fetchAndSetPosts(true)}
-                            disabled={loadingMore}
-                            className="bg-blue-600 text-white font-semibold px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors duration-300 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center gap-2 mx-auto"
-                        >
-                            {loadingMore ? (
-                                <>
-                                    <LoaderIcon className="w-5 h-5" />
-                                    <span>Carregando...</span>
-                                </>
+                    {/* Grelha de Resultados */}
+                    {loading ? (
+                        // Exibe skeletons durante o carregamento
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {Array.from({ length: 9 }).map((_, i) => (
+                                <React.Suspense fallback={<div />} key={i}>
+                                    {/* CardSkeleton mostra o esqueleto visual do card */}
+                                    {require('./CardSkeleton').default()}
+                                </React.Suspense>
+                            ))}
+                        </div>
+                    ) : error ? (
+                        <div className="text-red-500 text-center py-16">{error}</div>
+                    ) : (
+                        <div>
+                            {posts.length > 0 ? (
+                                // Grade de cards animada com AnimatePresence
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                    <AnimatePresence>
+                                        {posts.map((post) => (
+                                            <motion.div
+                                                key={post.id}
+                                                initial={{ opacity: 0, y: 20 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                exit={{ opacity: 0, y: -20 }}
+                                                transition={{ duration: 0.25 }}
+                                                className="h-full bg-white rounded-xl border border-gray-200 shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer group flex flex-col overflow-hidden"
+                                                onClick={() => onPostSelect?.(post)}
+                                            >
+                                                {/* Card de ferramenta com animação de entrada/saída */}
+                                                <div className="aspect-video w-full overflow-hidden">
+                                                    <img
+                                                        src={post.imageUrl || 'https://placehold.co/600x400/EEE/31343C?text=Sem+Imagem'}
+                                                        alt={`Imagem de ${post.title}`}
+                                                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                                                    />
+                                                </div>
+                                                <div className="p-5 flex-grow flex flex-col">
+                                                    <div className="flex items-start justify-between gap-3">
+                                                        <h3 className="text-lg font-bold text-gray-800 group-hover:text-blue-600 line-clamp-2 flex-grow">{post.title}</h3>
+                                                        <a href={post.url} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="flex-shrink-0">
+                                                            <ExternalLinkIcon className="w-5 h-5 text-gray-400 hover:text-blue-500" />
+                                                        </a>
+                                                    </div>
+                                                    <div className="flex items-center gap-2 text-sm text-gray-500 pt-1">
+                                                        <CalendarIcon className="w-4 h-4" />
+                                                        <span>{new Date(post.publishDate).toLocaleDateString("pt-BR")}</span>
+                                                    </div>
+                                                    <p className="text-gray-600 text-sm my-4 h-16 line-clamp-3">{post.excerpt}</p>
+                                                    <div className="flex flex-wrap gap-2 mt-auto">
+                                                        {post.tags.slice(0, 3).map(tag => <span key={tag.slug} className="px-2 py-1 text-xs bg-gray-100 text-gray-700 rounded-full border border-gray-200">{tag.name}</span>)}
+                                                    </div>
+                                                </div>
+                                            </motion.div>
+                                        ))}
+                                    </AnimatePresence>
+                                </div>
                             ) : (
-                                <span>Carregar Mais Soluções</span>
+                                <div className="text-center py-16">
+                                    <div className="inline-block bg-gray-100 p-5 rounded-full mb-4">
+                                        <SearchIcon className="text-gray-400 w-12 h-12" />
+                                    </div>
+                                    <h3 className="text-2xl font-semibold text-gray-800 mt-4 mb-2">Nenhum resultado encontrado</h3>
+                                    <p className="text-gray-500 max-w-md mx-auto">Tente ajustar seus filtros ou usar palavras-chave diferentes para encontrar a ferramenta de IA que você procura.</p>
+                                </div>
                             )}
-                        </button>
-                    </div>
-                )}
+                        </div>
+                    )}
+
+                    {/* Botão Carregar Mais */}
+                    {!loading && hasNextPage && (
+                        <div className="text-center">
+                            <button
+                                onClick={() => fetchAndSetPosts(true)}
+                                disabled={loadingMore}
+                                className="bg-blue-600 text-white font-semibold px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors duration-300 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center gap-2 mx-auto"
+                            >
+                                {loadingMore ? (
+                                    <>
+                                        <LoaderIcon className="w-5 h-5" />
+                                        <span>Carregando...</span>
+                                    </>
+                                ) : (
+                                    <span>Carregar Mais Soluções</span>
+                                )}
+                            </button>
+                        </div>
+                    )}
+                </main>
             </div>
         </div>
     );
