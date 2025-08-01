@@ -21,11 +21,15 @@ export default function HomeClient({ initialPosts, allCategories, error }: HomeC
       <header className="bg-white/95 backdrop-blur-sm border-b border-gray-200 sticky top-0 z-20">
         <div className="container mx-auto flex justify-between items-center p-4">
           <a href="https://findaitools.com.br" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2">
-            <img
-              src="/logo/Color logo - no background.svg"
-              alt="FindAITools Logo"
+            <video
+              src="/logo/color_logo_gif.mp4"
+              autoPlay
+              loop
+              muted
+              playsInline
               className="h-13 w-auto"
-              style={{ maxWidth: '234px' }}
+              style={{ maxWidth: '234px', display: 'block' }}
+              aria-label="FindAITools Logo animado"
             />
           </a>
           <nav className="hidden md:flex items-center gap-2 bg-gray-100 p-1 rounded-full">
