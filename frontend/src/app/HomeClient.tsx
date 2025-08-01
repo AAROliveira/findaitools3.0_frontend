@@ -44,11 +44,7 @@ export default function HomeClient({ initialPosts, allCategories, error }: HomeC
               Assistente IA
             </button>
           </nav>
-          <div>
-            <button className="hidden sm:block bg-blue-600 text-white px-4 py-2 rounded-full font-semibold text-sm hover:bg-blue-700 transition-colors duration-300 shadow-sm hover:shadow-md">
-              Submeter Ferramenta
-            </button>
-          </div>
+          {/* Botão 'Submeter Ferramenta' removido temporariamente do UI por solicitação */}
         </div>
       </header>
 

@@ -50,11 +50,17 @@ export async function getFilteredPosts(filters: {
   first?: number;
   after?: string;
 }) {
-  const { category, tags, searchTerm, orderBy, first = 21, after } = filters;
+  const { category, tags, searchTerm, orderBy, first = 100, after } = filters;
 
   const whereClauses: string[] = [];
   if (category && category !== 'all') {
-    whereClauses.push(`categoryName: "${category}"`);
+    // Se for número, usa categoryId, se for string, tenta converter para número
+    const categoryId = Number(category);
+    if (!isNaN(categoryId)) {
+      whereClauses.push(`categoryId: ${categoryId}`);
+    } else {
+      whereClauses.push(`categoryName: "${category}"`);
+    }
   }
   if (tags && tags.length > 0) {
     const formattedTags = tags.map(t => `"${t.replace(/"/g, '\\"')}"`).join(', ');

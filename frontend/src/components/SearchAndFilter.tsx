@@ -211,7 +211,7 @@ export default function SearchAndFilter({ initialPosts, allCategories, error: in
                         {!loading && (
                             <>
                                 <span className="font-bold text-gray-800">{posts.length}</span>
-                                <span> {posts.length === 1 ? 'solução encontrada' : 'soluções encontradas'}</span>
+                                <span> {posts.length === 1 ? 'ferramenta encontrada' : 'ferramentas encontradas'}</span>
                             </>
                         )}
                         {loading && <span className="italic">Buscando...</span>}
