@@ -31,10 +31,11 @@ export interface SearchAndFilterProps {
     allCategories: { id: string; name: string }[];
     error: string | null;
     onPostSelect?: (post: Post) => void;
+    isMobile?: boolean; // Indica se está em tela mobile/tablet
 }
 
 // --- Componente Principal ---
-export default function SearchAndFilter({ initialPosts, allCategories, error: initialError, onPostSelect }: SearchAndFilterProps) {
+export default function SearchAndFilter({ initialPosts, allCategories, error: initialError, onPostSelect, isMobile }: SearchAndFilterProps) {
     // --- Estado do Componente ---
     const [posts, setPosts] = useState<Post[]>([]);
     const [loading, setLoading] = useState(false);
@@ -183,55 +184,90 @@ export default function SearchAndFilter({ initialPosts, allCategories, error: in
                 </div>
             </div>
 
-            {/* Grid de layout: aside (filtros) + main (resultados) */}
-            <div className="grid grid-cols-1 md:grid-cols-[250px_1fr] gap-8">
-                {/* Barra lateral esquerda: filtros */}
-                <aside className="space-y-8">
-                    {/* Filtro de Categorias como links/botões */}
-                    <div className="space-y-2">
-                        <h3 className="font-semibold px-2">Categorias</h3>
-                        <button
-                            onClick={() => setSelectedCategory('all')}
-                            className={`block w-full text-left px-2 py-1.5 rounded-md ${selectedCategory === 'all' ? 'bg-blue-100 text-blue-800 font-bold' : 'hover:bg-gray-100'}`}
+            {/* Filtros responsivos: dropdown em mobile, sidebar em desktop */}
+            <div className={isMobile ? "space-y-4 mb-6" : "grid grid-cols-1 md:grid-cols-[250px_1fr] gap-8"}>
+                {/* Filtros em mobile: dropdowns */}
+                {isMobile ? (
+                    <div className="flex flex-col gap-4">
+                        {/* Dropdown de Categorias */}
+                        <select
+                            value={selectedCategory}
+                            onChange={(e) => setSelectedCategory(e.target.value)}
+                            className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 bg-white transition"
+                            aria-label="Filtrar por categoria"
                         >
-                            Todas
-                        </button>
-                        {allCategories.map(cat => (
-                            <button
-                                key={cat.id}
-                                onClick={() => setSelectedCategory(cat.name)}
-                                className={`block w-full text-left px-2 py-1.5 rounded-md ${selectedCategory === cat.name ? 'bg-blue-100 text-blue-800 font-bold' : 'hover:bg-gray-100'}`}
-                            >
-                                {cat.name}
-                            </button>
-                        ))}
-                    </div>
-
-                    {/* Filtro de Ordenação */}
-                    <div className="space-y-2">
-                        <h3 className="font-semibold px-2">Ordenar por</h3>
+                            <option value="all">Todas as Categorias</option>
+                            {allCategories.map(cat => (
+                                <option key={cat.id} value={cat.name}>{cat.name}</option>
+                            ))}
+                        </select>
+                        {/* Dropdown de Ordenação */}
                         <select
                             value={sortBy}
                             onChange={(e) => setSortBy(e.target.value)}
                             className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 bg-white transition"
+                            aria-label="Ordenar por"
                         >
                             <option value="DATE_DESC">Mais Recentes</option>
                             <option value="DATE_ASC">Mais Antigos</option>
                             <option value="TITLE_ASC">Título (A-Z)</option>
                             <option value="TITLE_DESC">Título (Z-A)</option>
                         </select>
-                    </div>
-
-                    {/* Botão Limpar Filtros */}
-                    {activeFilterCount > 0 && (
-                        <div className="pt-2">
+                        {/* Botão Limpar Filtros */}
+                        {activeFilterCount > 0 && (
                             <button onClick={clearFilters} className="flex items-center gap-1.5 text-sm font-semibold text-gray-500 hover:text-red-600 transition-colors">
                                 <ClearIcon className="w-4 h-4" />
                                 Limpar Tudo
                             </button>
+                        )}
+                    </div>
+                ) : (
+                    // Sidebar em telas médias+
+                    <aside className="space-y-8">
+                        {/* Filtro de Categorias como links/botões */}
+                        <div className="space-y-2">
+                            <h3 className="font-semibold px-2">Categorias</h3>
+                            <button
+                                onClick={() => setSelectedCategory('all')}
+                                className={`block w-full text-left px-2 py-1.5 rounded-md ${selectedCategory === 'all' ? 'bg-blue-100 text-blue-800 font-bold' : 'hover:bg-gray-100'}`}
+                            >
+                                Todas
+                            </button>
+                            {allCategories.map(cat => (
+                                <button
+                                    key={cat.id}
+                                    onClick={() => setSelectedCategory(cat.name)}
+                                    className={`block w-full text-left px-2 py-1.5 rounded-md ${selectedCategory === cat.name ? 'bg-blue-100 text-blue-800 font-bold' : 'hover:bg-gray-100'}`}
+                                >
+                                    {cat.name}
+                                </button>
+                            ))}
                         </div>
-                    )}
-                </aside>
+                        {/* Filtro de Ordenação */}
+                        <div className="space-y-2">
+                            <h3 className="font-semibold px-2">Ordenar por</h3>
+                            <select
+                                value={sortBy}
+                                onChange={(e) => setSortBy(e.target.value)}
+                                className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 bg-white transition"
+                            >
+                                <option value="DATE_DESC">Mais Recentes</option>
+                                <option value="DATE_ASC">Mais Antigos</option>
+                                <option value="TITLE_ASC">Título (A-Z)</option>
+                                <option value="TITLE_DESC">Título (Z-A)</option>
+                            </select>
+                        </div>
+                        {/* Botão Limpar Filtros */}
+                        {activeFilterCount > 0 && (
+                            <div className="pt-2">
+                                <button onClick={clearFilters} className="flex items-center gap-1.5 text-sm font-semibold text-gray-500 hover:text-red-600 transition-colors">
+                                    <ClearIcon className="w-4 h-4" />
+                                    Limpar Tudo
+                                </button>
+                            </div>
+                        )}
+                    </aside>
+                )}
 
                 {/* Conteúdo principal: resultados */}
                 <main className="space-y-6">

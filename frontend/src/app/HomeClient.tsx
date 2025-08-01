@@ -3,6 +3,7 @@
 import SearchAndFilter from "@/components/SearchAndFilter";
 import { Chatbot } from "@/components/Chatbot";
 import { useState } from 'react';
+import { useEffect } from 'react';
 import { Bot, Wrench } from 'lucide-react';
 
 // Tipos para as props
@@ -14,6 +15,14 @@ interface HomeClientProps {
 
 export default function HomeClient({ initialPosts, allCategories, error }: HomeClientProps) {
   const [activeTab, setActiveTab] = useState('ferramentas');
+  // Detecta se está em tela pequena (mobile/tablet)
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   return (
     <div className="bg-gray-50 min-h-screen">
@@ -32,6 +41,7 @@ export default function HomeClient({ initialPosts, allCategories, error }: HomeC
               aria-label="FindAITools Logo animado"
             />
           </a>
+          {/* Navegação só aparece em telas médias+ */}
           <nav className="hidden md:flex items-center gap-2 bg-gray-100 p-1 rounded-full">
             <button
               onClick={() => setActiveTab('ferramentas')}
@@ -53,19 +63,45 @@ export default function HomeClient({ initialPosts, allCategories, error }: HomeC
       </header>
 
       {/* Conteúdo Principal da Página */}
-      <main className="container mx-auto py-8">
+      <main className="container mx-auto py-8 relative">
+        {/* Renderiza SearchAndFilter normalmente */}
         {activeTab === 'ferramentas' && (
           <SearchAndFilter
             initialPosts={initialPosts}
-            allCategories={allCategories} // CORREÇÃO: Propriedade agora está a ser passada
+            allCategories={allCategories}
             error={error}
+            isMobile={isMobile} // Passa info para SearchAndFilter
           />
         )}
 
+        {/* Renderiza Chatbot normalmente */}
         {activeTab === 'chatbot' && (
           <div className="flex justify-center">
             <Chatbot />
           </div>
+        )}
+
+        {/* Botão flutuante para acessar o Chatbot em mobile/tablet */}
+        {isMobile && activeTab !== 'chatbot' && (
+          <button
+            onClick={() => setActiveTab('chatbot')}
+            className="fixed bottom-6 right-6 z-50 bg-primary text-primary-foreground shadow-lg rounded-full p-4 flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+            aria-label="Abrir Assistente IA"
+          >
+            <Bot className="w-6 h-6" />
+            <span className="font-semibold text-sm hidden xs:inline">Assistente</span>
+          </button>
+        )}
+        {/* Botão para voltar para ferramentas quando estiver no Chatbot em mobile */}
+        {isMobile && activeTab === 'chatbot' && (
+          <button
+            onClick={() => setActiveTab('ferramentas')}
+            className="fixed bottom-6 right-6 z-50 bg-gray-800 text-white shadow-lg rounded-full p-4 flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-gray-400/50 transition-all"
+            aria-label="Voltar para busca de ferramentas"
+          >
+            <Wrench className="w-6 h-6" />
+            <span className="font-semibold text-sm hidden xs:inline">Ferramentas</span>
+          </button>
         )}
       </main>
     </div>
