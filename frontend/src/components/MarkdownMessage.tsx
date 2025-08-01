@@ -5,6 +5,21 @@ interface MarkdownMessageProps {
     content: string;
 }
 
-export const MarkdownMessage: React.FC<MarkdownMessageProps> = ({ content }) => {
-    return <ReactMarkdown>{content}</ReactMarkdown>;
-};
+export function MarkdownMessage({ content }: MarkdownMessageProps) {
+    return (
+        <ReactMarkdown
+            components={{
+                a: ({ node, ...props }) => (
+                    <a
+                        {...props}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:underline font-semibold"
+                    />
+                ),
+            }}
+        >
+            {content}
+        </ReactMarkdown>
+    );
+}
