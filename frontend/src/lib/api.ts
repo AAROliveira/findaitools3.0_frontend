@@ -67,44 +67,48 @@ export async function getFilteredPosts(filters: {
     whereClauses.push(`orderby: { field: ${orderBy.field}, order: ${orderBy.order} }`);
   }
 
-  const whereArg = whereClauses.length > 0 ? `where: { ${whereClauses.join(', ')} }` : '';
-  const afterArg = after ? `after: "${after}"` : '';
+  // Monta os argumentos dinamicamente, evitando vírgulas extras
+  const args = [
+    `first: ${first}`,
+    whereClauses.length > 0 ? `where: { ${whereClauses.join(', ')} }` : null,
+    after ? `after: "${after}"` : null
+  ].filter(Boolean).join(', ');
 
   const query = `
-        query GetFilteredPosts {
-          posts(first: ${first}, ${whereArg}, ${afterArg}) {
+    query GetFilteredPosts {
+      posts(${args}) {
+        nodes {
+          id
+          title
+          excerpt
+          date
+          slug
+          link
+          featuredImage {
+            node {
+              sourceUrl(size: LARGE)
+            }
+          }
+          categories {
             nodes {
-              id
-              title
-              excerpt
-              date
+              name
+            }
+          }
+          tags {
+            nodes {
+              name
               slug
-              link
-              featuredImage {
-                node {
-                  sourceUrl(size: LARGE)
-                }
-              }
-              categories {
-                nodes {
-                  name
-                }
-              }
-              tags {
-                nodes {
-                  name
-                  slug
-                }
-              }
             }
-            pageInfo {
-              hasNextPage
-              endCursor
-            }
-            // count removido: não existe no schema padrão
           }
         }
-    `;
+        pageInfo {
+          hasNextPage
+          endCursor
+        }
+        // count removido: não existe no schema padrão
+      }
+    }
+  `;
 
   const data = await fetchAPI(query);
   return data?.posts; // Return the whole posts object including pageInfo
