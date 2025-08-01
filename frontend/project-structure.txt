@@ -5,38 +5,57 @@ O proxy está implementado em src/app/api/graphql/route.ts e elimina qualquer pr
 No SSR/ISR (lado servidor), o fetchAPI monta a URL absoluta do proxy usando a variável de ambiente NEXT_PUBLIC_SITE_URL.
 No client (navegador), o fetchAPI usa o caminho relativo /api/graphql.
 Se mudar o domínio do frontend, lembre-se de atualizar NEXT_PUBLIC_SITE_URL no Vercel.
-Estrutura do projeto (frontend):
+
+Estrutura do projeto (atualizada em 01/08/2025):
 
 frontend/
-├── .env.local
-├── next.config.js
-├── package.json
-├── postcss.config.js
-├── tailwind.config.js
-├── tsconfig.json
+├── components/
+│   ├── Chatbot.tsx
+│   ├── MarkdownMessage.tsx
+│   ├── SearchAndFilter.tsx
+│   └── ui/
+│       ├── badge.tsx
+│       ├── button.tsx
+│       ├── card.tsx
+│       └── input.tsx
 ├── src/
 │   ├── app/
-│   │   ├── page.tsx                # Página principal (SSR/ISR)
-│   │   ├── HomeClient.tsx          # Componente client-side (UI, tabs, sidebar)
-│   │   └── api/
-│   │       └── graphql/            # Proxy GraphQL (route.ts)
-│   ├── components/
-│   │   ├── Chatbot.tsx
-│   │   ├── SearchAndFilter.tsx     # Componente de busca/filtros/cards
-│   │   └── ui/
-│   │       ├── badge.tsx
-│   │       ├── button.tsx
-│   │       ├── card.tsx
-│   │       └── input.tsx
+│   │   ├── globals.css
+│   │   ├── layout.tsx
+│   │   └── page.tsx
 │   └── lib/
-│       ├── api.ts                  # Funções de fetch (usa proxy /api/graphql)
-│       └── mockPosts.json          # Mock de dados (apenas para dev)
+│       └── utils.ts
+├── app/
+│   ├── api/
+│   │   └── chat/
+│   │       └── route.ts  # Endpoint Gemini/Vertex AI com fallback e prompt guiado
+│   ├── body.json
+│   ├── llm_config.py
+│   ├── local_search.py
+│   ├── main.py
+│   ├── ollama_config.py
+│   ├── run_server.py
+│   ├── setup_ollama.py
+│   ├── start_server.py
+│   ├── test_api.py
+│   ├── test_backend.py
+│   ├── test_chat.py
+│   └── __pycache__/
+├── package.json
+├── tsconfig.json
+├── next.config.js
+├── postcss.config.js
+├── tailwind.config.js
+├── next-env.d.ts
+└── project-structure.txt  # (este arquivo)
 
-Principais fluxos:
-- SSR/ISR: page.tsx busca dados do WordPress via proxy GraphQL (/api/graphql) e repassa para HomeClient.
-- HomeClient: controla abas, sidebar, UI interativa.
-- SearchAndFilter: recebe posts já mapeados, faz busca/filtros no client.
-- .env.local: define o endpoint do GraphQL do WordPress (usado apenas pelo proxy).
+Principais status:
+- Chatbot integrado ao Gemini/Vertex AI (Service Account, RAG findaitools.com.br)
+- Prompt do Gemini orientado para conversa guiada e consulta ao RAG só após entender a necessidade
+- Fallback amigável no backend para respostas vazias
+- UI moderna com Markdown, contador de soluções e filtros
+- Dependências antigas removidas
+- Pronto para produção e deploy no Vercel
 
 Proxy GraphQL:
 - src/app/api/graphql/route.ts: repassa requisições do frontend para o endpoint real do WordPress, eliminando CORS.

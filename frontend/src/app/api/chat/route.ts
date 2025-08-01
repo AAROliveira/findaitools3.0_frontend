@@ -107,7 +107,7 @@ Nunca responda nada fora do contexto recuperado. Sempre cite o link findaitools.
         const result = await model.generateContent({ contents: history });
         // Log detalhado para diagnóstico
         console.log('VertexAI result:', JSON.stringify(result, null, 2));
-        let text = result?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+        let text = result?.response?.candidates?.[0]?.content?.parts?.[0]?.text || '';
         if (!text || text.trim() === '') {
             text = 'Desculpe, não consegui processar sua pergunta. Tente reformular ou perguntar sobre uma ferramenta de IA.';
         }
