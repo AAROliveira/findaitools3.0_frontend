@@ -21,7 +21,7 @@ export function Chatbot() {
         {
             id: "initial",
             role: "assistant",
-            content: "👋 Olá! Sou o assistente da <FindAItools className=\"com br\"></FindAItools>. Pergunte sobre ferramentas de IA, suas funcionalidades, ou qualquer dúvida sobre inteligência artificial!",
+            content: "👋 Olá! Sou o assistente da FindAItools.com.br. Pergunte sobre ferramentas de IA, suas funcionalidades, ou qualquer dúvida sobre inteligência artificial!",
             timestamp: new Date("2025-01-01"), // Data fixa para evitar erro de hidratação
         },
     ]);
