@@ -21,7 +21,7 @@ export function Chatbot() {
         {
             id: "initial",
             role: "assistant",
-            content: "👋 Olá! Sou o assistente da FindAI Tools. Pergunte sobre ferramentas de IA, suas funcionalidades, ou qualquer dúvida sobre inteligência artificial!",
+            content: "👋 Olá! Sou o assistente da <FindAItools className=\"com br\"></FindAItools>. Pergunte sobre ferramentas de IA, suas funcionalidades, ou qualquer dúvida sobre inteligência artificial!",
             timestamp: new Date("2025-01-01"), // Data fixa para evitar erro de hidratação
         },
     ]);
@@ -120,7 +120,7 @@ export function Chatbot() {
                             <Bot className="w-6 h-6" />
                         </div>
                         <div>
-                            <h2 className="text-xl font-bold">Assistente IA</h2>
+                            <h2 className="text-xl font-bold">Assistente FindAItools</h2>
                             <p className="text-blue-100 text-sm">
                                 Especialista em ferramentas de inteligência artificial
                             </p>
