@@ -58,12 +58,15 @@ Se não encontrar no corpus, responda: "Não encontrei nenhuma ferramenta corres
 Sempre use esse formato e sempre cite o link findaitools.com.br.`,
                 tools: {
                     retrieval: {
-                        type: 'vertex-rag-store',
-                        ragResources: [
+                        vertexRagStore: {
+                            ragResources: [
                             {
-                                ragCorpus: process.env.GOOGLE_RAG_CORPUS,
+                                ragResource: {
+                                ragCorpus: 'projects/findaitools/locations/us-central1/ragCorpora/6917529027641081856',
+                                },
                             },
-                        ],
+                            ],
+                        },
                     },
                 },
                 safetySettings: [
