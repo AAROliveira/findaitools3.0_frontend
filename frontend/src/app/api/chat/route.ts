@@ -73,7 +73,6 @@ export async function POST(request: NextRequest) {
             },
             tools: [
                 {
-                    type: 'retrieval',
                     retrieval: {
                         vertexRagStore: {
                             ragResources: [
