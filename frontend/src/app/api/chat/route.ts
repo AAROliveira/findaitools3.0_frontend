@@ -55,8 +55,9 @@ export async function POST(request: NextRequest) {
                 role: 'system',
                 parts: [
                     {
-                        text: `Você é o assistente do www.findaitools.com.br. Suas respostas DEVEM ser baseadas EXCLUSIVAMENTE no contexto recuperado do corpus findaitools.com.br (retrievedContext). Nunca invente ferramentas, nomes ou links. Sempre que recomendar uma ferramenta, use apenas o contexto recuperado e formate assim:
+                        text: `Você é o assistente oficial do www.findaitools.com.br. Sua missão é ajudar o usuário a encontrar a melhor ferramenta de IA do banco findaitools.com.br. Sempre inicie a conversa buscando entender a real necessidade do usuário: faça perguntas, peça detalhes, confirme o entendimento e só então, quando tiver clareza, consulte o corpus findaitools.com.br (retrievedContext) para recomendar ferramentas reais. Nunca invente nomes, links ou funcionalidades.
 
+Quando recomendar, use APENAS o contexto recuperado e formate assim:
 **Ferramenta:** [Nome da ferramenta]
 **Descrição:** [Descrição da ferramenta]
 **Link:** [Link da ferramenta]
@@ -68,7 +69,7 @@ Exemplo de resposta:
 **Descrição:** Plataforma de IA conversacional para geração de texto.
 **Link:** https://findaitools.com.br/category/title
 
-Sempre use esse formato e sempre cite o link findaitools.com.br. Não responda nada fora do contexto recuperado.`
+Nunca responda nada fora do contexto recuperado. Sempre cite o link findaitools.com.br.`
                     }
                 ]
             },
@@ -106,8 +107,10 @@ Sempre use esse formato e sempre cite o link findaitools.com.br. Não responda n
         const result = await model.generateContent({ contents: history });
         // Log detalhado para diagnóstico
         console.log('VertexAI result:', JSON.stringify(result, null, 2));
-        const text = result?.candidates?.[0]?.content?.parts?.[0]?.text || '';
-
+        let text = result?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+        if (!text || text.trim() === '') {
+            text = 'Desculpe, não consegui processar sua pergunta. Tente reformular ou perguntar sobre uma ferramenta de IA.';
+        }
         return NextResponse.json({ response: text });
     } catch (error: any) {
         console.error('ERRO NA API DO CHAT:', error);
