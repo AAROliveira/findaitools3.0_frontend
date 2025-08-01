@@ -103,6 +103,8 @@ export async function POST(request: NextRequest) {
         }));
 
         const result = await model.generateContent({ contents: history });
+        // Log detalhado para diagnóstico
+        console.log('VertexAI result:', JSON.stringify(result, null, 2));
         const text = result?.candidates?.[0]?.content?.parts?.[0]?.text || '';
 
         return NextResponse.json({ response: text });
