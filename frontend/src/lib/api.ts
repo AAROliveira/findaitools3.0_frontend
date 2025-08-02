@@ -130,6 +130,7 @@ export async function getAllCategories() {
             nodes {
               id
               name
+              slug
             }
           }
         }

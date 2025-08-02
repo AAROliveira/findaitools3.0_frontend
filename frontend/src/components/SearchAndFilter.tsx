@@ -28,7 +28,7 @@ export interface Post {
 
 export interface SearchAndFilterProps {
     initialPosts: any; // Now expects the whole posts object
-    allCategories: { id: string; name: string }[];
+    allCategories: { id: string; name: string; slug?: string }[];
     error: string | null;
     onPostSelect?: (post: Post) => void;
     isMobile?: boolean; // Indica se está em tela mobile/tablet
@@ -198,7 +198,7 @@ export default function SearchAndFilter({ initialPosts, allCategories, error: in
                         >
                             <option value="all">Todas as Categorias</option>
                             {allCategories.map(cat => (
-                                <option key={cat.id} value={cat.name}>{cat.name}</option>
+                                <option key={cat.id} value={cat.slug || cat.name}>{cat.name}</option>
                             ))}
                         </select>
                         {/* Dropdown de Ordenação */}
@@ -236,8 +236,8 @@ export default function SearchAndFilter({ initialPosts, allCategories, error: in
                             {allCategories.map(cat => (
                                 <button
                                     key={cat.id}
-                                    onClick={() => setSelectedCategory(cat.name)}
-                                    className={`block w-full text-left px-2 py-1.5 rounded-md ${selectedCategory === cat.name ? 'bg-blue-100 text-blue-800 font-bold' : 'hover:bg-gray-100'}`}
+                                    onClick={() => setSelectedCategory(cat.slug || cat.name)}
+                                    className={`block w-full text-left px-2 py-1.5 rounded-md ${selectedCategory === (cat.slug || cat.name) ? 'bg-blue-100 text-blue-800 font-bold' : 'hover:bg-gray-100'}`}
                                 >
                                     {cat.name}
                                 </button>
