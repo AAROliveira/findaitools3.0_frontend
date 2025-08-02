@@ -54,7 +54,7 @@ export default async function PostPage({ params }: { params: { category: string;
                 <h2 className="text-lg font-semibold mb-4">Ferramentas relacionadas:</h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {post.related.map((rel: any) => (
-                        <a key={rel.slug} href={`/${params.category}/${rel.slug}`} className="block border border-gray-200 rounded-lg p-4 hover:shadow-md transition bg-white">
+                        <a key={rel.slug} href={`/${params.category}/${rel.slug}`} className="block border border-gray-200 rounded-lg p-4 hover:shadow-md transition bg-white" target="_blank" rel="noopener noreferrer">
                             {rel.image && (
                                 <img src={rel.image} alt={rel.title} className="h-12 w-auto mb-2 rounded" style={{ maxWidth: '80px' }} />
                             )}
