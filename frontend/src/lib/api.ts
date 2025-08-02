@@ -137,3 +137,69 @@ export async function getAllCategories() {
   const data = await fetchAPI(query);
   return data?.categories?.nodes.filter((cat: { name: string }) => cat.name !== 'Uncategorized') || [];
 }
+
+/**
+ * Busca um post completo pelo slug, incluindo imagem destacada e relacionados.
+ */
+export async function getPostBySlug(slug: string) {
+  const query = `
+    query PostBySlug($slug: String!) {
+      postBy(slug: $slug) {
+        title
+        date
+        excerpt
+        content
+        featuredImage {
+          node {
+            sourceUrl(size: LARGE)
+          }
+        }
+        acf {
+          titulo_do_post
+          descricao_da_ferramenta
+          atributos_da_ferramenta
+          exemplos_de_uso_da_ferramenta
+          visite_o_site
+        }
+        categories { nodes { name, slug, id } }
+        tags { nodes { name } }
+        id
+      }
+      posts(first: 4, where: { categoryName: "", notIn: [$slug] }) {
+        nodes {
+          slug
+          title
+          excerpt
+          date
+          featuredImage { node { sourceUrl(size: MEDIUM) } }
+        }
+      }
+    }
+  `;
+  const data = await fetchAPI(query, { variables: { slug } });
+  const post = data?.postBy;
+  if (!post) return null;
+  // Parse atributos e exemplos para array
+  const parseList = (str?: string) => str ? str.split(/\n+/).filter(Boolean) : [];
+  // Relacionados: pega posts diferentes do atual, mesma(s) categoria(s)
+  const related = (data?.posts?.nodes || []).filter((p: any) => p.slug !== slug).map((p: any) => ({
+    slug: p.slug,
+    title: p.title,
+    description: p.excerpt?.replace(/<[^>]+>/g, ''),
+    date: p.date,
+    image: p.featuredImage?.node?.sourceUrl || undefined,
+  }));
+  return {
+    title: post.acf?.titulo_do_post || post.title,
+    logo: post.featuredImage?.node?.sourceUrl,
+    date: post.date,
+    categories: post.categories?.nodes?.map((c: any) => c.name) || [],
+    tags: post.tags?.nodes?.map((t: any) => t.name) || [],
+    description: post.acf?.descricao_da_ferramenta || post.excerpt || '',
+    attributes: parseList(post.acf?.atributos_da_ferramenta),
+    examples: parseList(post.acf?.exemplos_de_uso_da_ferramenta),
+    site: post.acf?.visite_o_site,
+    content: post.content,
+    related,
+  };
+}
