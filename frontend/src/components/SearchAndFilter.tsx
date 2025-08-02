@@ -135,7 +135,7 @@ export default function SearchAndFilter({ initialPosts, allCategories, error: in
             id: post.id,
             title: post.title.replace(/<[^>]*>?/gm, ''),
             excerpt: post.excerpt.replace(/<[^>]*>?/gm, ''),
-            url: post.categories?.nodes?.[0]?.slug && post.slug ? `/${post.categories.nodes[0].slug}/${post.slug}` : `/posts/${post.slug}`,
+            url: post.link,
             imageUrl: post.featuredImage?.node?.sourceUrl,
             category: post.categories?.nodes?.[0]?.name || 'Geral',
             tags: Array.isArray(post.tags?.nodes)
