@@ -1,3 +1,10 @@
+// SEO dinâmico para a página principal
+export async function generateMetadata() {
+    return {
+        title: 'FindAITools - Encontre as melhores ferramentas de IA',
+        description: 'Descubra, filtre e compare ferramentas de Inteligência Artificial para todas as áreas. Busque por categoria, compare soluções e converse com nosso assistente IA para encontrar a melhor opção para você.',
+    };
+}
 import HomeClient from "./HomeClient";
 import { getFilteredPosts, getAllCategories } from "@/lib/api";
 

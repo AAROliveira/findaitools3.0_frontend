@@ -10,6 +10,9 @@ export const metadata: Metadata = {
     keywords: ["IA", "Inteligência Artificial", "RAG", "Ollama", "Chatbot", "Ferramentas AI"],
     authors: [{ name: "FindAI Tools" }],
     viewport: "width=device-width, initial-scale=1",
+    icons: {
+        icon: "/logo/118191020_padded_logo.png",
+    },
 };
 
 export default function RootLayout({
