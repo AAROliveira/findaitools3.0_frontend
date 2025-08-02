@@ -11,7 +11,7 @@ export const metadata: Metadata = {
     authors: [{ name: "FindAI Tools" }],
     viewport: "width=device-width, initial-scale=1",
     icons: {
-        icon: "/logo/118191020_padded_logo.png",
+        icon: "/logo/Black logo - no background - no padding.PNG",
     },
 };
 
