@@ -345,7 +345,7 @@ export default function SearchAndFilter({ initialPosts, allCategories, error: in
                                                 <div className="p-5 flex-grow flex flex-col">
                                                     <div className="flex items-start justify-between gap-3">
                                                         <h3 className="text-lg font-bold text-gray-800 group-hover:text-blue-600 line-clamp-2 flex-grow">{post.title}</h3>
-                                                        <a href={post.url} className="flex-shrink-0" onClick={e => e.stopPropagation()}>
+                                                        <a href={post.url} className="flex-shrink-0" onClick={e => e.stopPropagation()} target="_blank" rel="noopener noreferrer">
                                                             <span className="inline-block px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded-full font-semibold">Ver detalhes</span>
                                                         </a>
                                                     </div>
