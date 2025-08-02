@@ -135,7 +135,7 @@ export default function SearchAndFilter({ initialPosts, allCategories, error: in
             id: post.id,
             title: post.title.replace(/<[^>]*>?/gm, ''),
             excerpt: post.excerpt.replace(/<[^>]*>?/gm, ''),
-            url: post.link,
+            url: `/posts/${post.slug}`,
             imageUrl: post.featuredImage?.node?.sourceUrl,
             category: post.categories?.nodes?.[0]?.name || 'Geral',
             tags: Array.isArray(post.tags?.nodes)
@@ -345,8 +345,8 @@ export default function SearchAndFilter({ initialPosts, allCategories, error: in
                                                 <div className="p-5 flex-grow flex flex-col">
                                                     <div className="flex items-start justify-between gap-3">
                                                         <h3 className="text-lg font-bold text-gray-800 group-hover:text-blue-600 line-clamp-2 flex-grow">{post.title}</h3>
-                                                        <a href={post.url} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="flex-shrink-0">
-                                                            <ExternalLinkIcon className="w-5 h-5 text-gray-400 hover:text-blue-500" />
+                                                        <a href={post.url} className="flex-shrink-0" onClick={e => e.stopPropagation()}>
+                                                            <span className="inline-block px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded-full font-semibold">Ver detalhes</span>
                                                         </a>
                                                     </div>
                                                     <div className="flex items-center gap-2 text-sm text-gray-500 pt-1">
