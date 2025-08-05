@@ -1,0 +1,97 @@
+Here is your detailed guide as an MD file, saved and ready for download or sharing:
+
+---
+
+## Como Migrar Apenas o Frontend para Vercel Mantendo WordPress Intacto
+
+### Cenário
+
+Seu site principal é **findaitools.com.br**, hospedado na Hostinger usando WordPress.
+
+Você deseja que **apenas a página inicial** (findaitools.com.br e [www.findaitools.com.br](http://www.findaitools.com.br)) seja servida por um novo frontend hospedado na Vercel (exemplo: um app React, Next.js, etc).
+
+Todo o restante (findaitools.com.br/qualquer-coisa, /wp-admin, /postagem, /categoria, etc) deve continuar no WordPress/Hostinger, **sem risco de perder acesso, SEO ou conteúdos**.
+
+---
+
+### Resumo da Solução
+
+* Publicar seu frontend (landing page) na Vercel e acessar por um subdomínio do tipo **app.findaitools.com.br**.
+* Configurar redirecionamento (redirect 301) **APENAS do domínio raiz** (findaitools.com.br e [www.findaitools.com.br](http://www.findaitools.com.br)) para o novo frontend (app.findaitools.com.br), mantendo todas as demais rotas no WordPress.
+* Nenhuma mudança nas rotas internas, painel, posts ou demais áreas do WordPress.
+
+---
+
+### Passo a Passo
+
+**1. Suba o frontend na Vercel**
+
+* Crie seu projeto na Vercel normalmente (usando Next.js, React, etc).
+* No painel da Vercel, adicione o domínio personalizado **app.findaitools.com.br** como um novo subdomínio do seu projeto.
+* Configure na Vercel o deploy automático para esse subdomínio.
+
+**2. Adicione o subdomínio na Hostinger**
+
+* No painel de DNS da Hostinger, crie um registro **CNAME** para **app** apontando para o destino dado pela Vercel (exemplo: `algumacoisa.vercel-dns.com`).
+* Aguarde a propagação do DNS (pode levar minutos ou horas).
+
+**3. Verifique se o subdomínio está funcionando**
+
+* Acesse [https://app.findaitools.com.br/](https://app.findaitools.com.br/) e confira se o frontend da Vercel está acessível.
+
+**4. Configure o redirecionamento (apenas do domínio raiz!)**
+
+* No painel da Hostinger, vá em **Redirecionamento de Domínio**.
+* Crie um redirecionamento 301:
+
+  * **De:** findaitools.com.br (sem path!)
+  * **Para:** [https://app.findaitools.com.br](https://app.findaitools.com.br)
+* Repita para o **[www.findaitools.com.br](http://www.findaitools.com.br)** caso utilize o "www".
+* **Não adicione redirecionamentos com wildcard** (como findaitools.com.br/\*), pois isso redirecionaria tudo, o que NÃO é desejado!
+* **NÃO troque nameservers para Vercel**. Continue usando DNS da Hostinger.
+
+**5. Confirme a funcionalidade**
+
+* Acesse **findaitools.com.br** e **[www.findaitools.com.br](http://www.findaitools.com.br)** → Deve abrir a landing page da Vercel.
+* Acesse qualquer outra rota (posts, categorias, admin etc) → Deve abrir normalmente no WordPress (exemplo: findaitools.com.br/chatbot/nome-da-ferramenta).
+
+**6. Acesso ao painel admin**
+
+* **Opcional:** Caso queira um acesso dedicado ao painel WordPress, crie um subdomínio como **admin.findaitools.com.br** na Hostinger, apontando para a mesma raiz do WordPress.
+* Assim, admin.findaitools.com.br/wp-admin também abre o painel normalmente.
+
+---
+
+### Dicas Importantes
+
+* **NUNCA** faça redirecionamento global do tipo findaitools.com.br/\*, senão todo o tráfego será enviado à Vercel e o WordPress ficará inacessível.
+* O redirecionamento deve ser **só para o domínio raiz**.
+* Continue atualizando o WordPress normalmente, inclusive via API, sem impactos.
+* O painel Hostinger/WordPress continua intacto.
+
+---
+
+### Exemplo Visual (Resumido)
+
+| URL que o usuário digita                                                                         | Para onde vai?                       |
+| ------------------------------------------------------------------------------------------------ | ------------------------------------ |
+| [https://findaitools.com.br](https://findaitools.com.br)                                         | Frontend novo na Vercel (React, etc) |
+| [https://www.findaitools.com.br](https://www.findaitools.com.br)                                 | Frontend novo na Vercel              |
+| [https://findaitools.com.br/wp-admin](https://findaitools.com.br/wp-admin)                       | Painel WordPress (Hostinger)         |
+| [https://findaitools.com.br/post-ou-categoria](https://findaitools.com.br/post-ou-categoria)     | Conteúdo WordPress (Hostinger)       |
+| [https://admin.findaitools.com.br/wp-admin](https://admin.findaitools.com.br/wp-admin)           | Painel WordPress (Hostinger)         |
+| [https://findaitools.com.br/qualquer-outra-rota](https://findaitools.com.br/qualquer-outra-rota) | Conteúdo WordPress (Hostinger)       |
+| [https://app.findaitools.com.br](https://app.findaitools.com.br)                                 | Frontend novo na Vercel              |
+
+---
+
+### Resumo Final
+
+* Landing page ultra rápida e moderna na Vercel.
+* Todo conteúdo WordPress preservado.
+* SEO dos posts e rotas antigas mantido.
+* Acesso ao painel administrativo seguro.
+
+---
+
+**Arquivo pronto para documentação ou onboarding! Se quiser baixar como `.md` ou precisa de ajustes, só avisar!**

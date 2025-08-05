@@ -18,7 +18,12 @@ export default async function PostPage({ params }: { params: { category: string;
         <main className="max-w-2xl mx-auto py-10 px-4">
             {post.logo && (
                 <div className="flex justify-center mb-6">
-                    <img src={post.logo} alt={post.title} className="h-32 w-auto rounded-xl shadow" style={{ maxWidth: '320px' }} />
+                    <img
+                        src={post.logo}
+                        alt={post.title}
+                        className="rounded-xl shadow max-h-32 sm:max-h-40 md:max-h-48 w-auto"
+                        style={{ maxWidth: '220px', height: 'auto' }}
+                    />
                 </div>
             )}
             <h1 className="mb-2">{post.title}</h1>

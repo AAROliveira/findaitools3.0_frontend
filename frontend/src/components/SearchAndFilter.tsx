@@ -2,6 +2,17 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
+import { v4 as uuidv4 } from 'uuid';
+// Função utilitária para obter ou gerar um sessionId anônimo
+function getSessionId() {
+    if (typeof window === 'undefined') return '';
+    let sessionId = localStorage.getItem('sessionId');
+    if (!sessionId) {
+        sessionId = uuidv4();
+        localStorage.setItem('sessionId', sessionId as string);
+    }
+    return sessionId || '';
+}
 // Importa AnimatePresence e motion para animar a grade de resultados
 import { AnimatePresence, motion } from "@/components/ui/motion";
 import { getFilteredPosts } from "@/lib/api";
@@ -71,6 +82,18 @@ export default function SearchAndFilter({ initialPosts, allCategories, error: in
         }
         const handler = setTimeout(() => {
             fetchAndSetPosts(false); // False indicates it's a new search, not loading more
+            // Envia o termo buscado para analytics
+            if (searchTerm && searchTerm.length > 1) {
+                fetch('/api/analytics/search', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        searchTerm,
+                        timestamp: Date.now(),
+                        sessionId: getSessionId(),
+                    })
+                });
+            }
         }, 500);
         return () => clearTimeout(handler);
     }, [searchTerm, selectedCategory, sortBy, selectedTags]);
