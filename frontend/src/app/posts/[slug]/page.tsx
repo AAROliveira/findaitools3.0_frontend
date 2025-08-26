@@ -7,4 +7,6 @@ export default function PostPage() {
             <p>Esta é uma página de exemplo para corrigir o erro de build do Next.js.</p>
         </main>
     );
+    4
+    
 }
