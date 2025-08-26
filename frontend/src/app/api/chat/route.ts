@@ -79,7 +79,7 @@ Nunca responda nada fora do contexto recuperado. Sempre cite o link findaitools.
                         vertexRagStore: {
                             ragResources: [
                                 {
-                                    ragCorpus: process.env.GOOGLE_RAG_CORPUS,
+                                    ragCorpus: process.env.GOOGLE_RAG_CORPUS || "projects/findaitools/locations/us-central1/ragCorpora/7991637538768945152",
                                 },
                             ],
                         },
